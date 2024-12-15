@@ -5,3 +5,5 @@
 
 a.exe
 to_do_list.txt
+*.dot
+test.cpp

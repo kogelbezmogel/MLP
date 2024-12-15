@@ -10,7 +10,7 @@ Tensor::Tensor(bool calc_grad, Graph* graph_context) :
     _grad_graph(graph_context) {
         
     if(_calc_grad && !_grad_graph->contains(*this) )
-        _grad_graph -> addNode( new Node(*this) );
+        _grad_graph -> addNode( new Node(this) );
     }
 
 Tensor::Tensor(float value, bool calc_grad, Graph* graph_context) :
@@ -24,16 +24,16 @@ Tensor::Tensor(std::vector<size_t> size, float init, bool calc_grad, Graph* grap
     _grad_graph(graph_context) {
         
     if(_calc_grad  && !_grad_graph->contains(*this) )
-        _grad_graph -> addNode( new Node(*this) );
+        _grad_graph -> addNode( new Node(this) );
     }
 
 Tensor::Tensor(std::vector<size_t> size, std::vector<float> data, bool calc_grad, Graph* graph_context) :
     SimpleTensor(size, data),
     _calc_grad(calc_grad),
     _grad_graph(graph_context) {
-        
-    if(_calc_grad  && !_grad_graph->contains(*this) )
-        _grad_graph -> addNode( new Node(*this) );
+     
+    if(_calc_grad  && !_grad_graph->contains(*this))
+        _grad_graph -> addNode( new Node(this) );
     }
 
 Tensor::Tensor(std::vector<size_t> size, float* data, bool calc_grad, Graph* graph_context) :
@@ -42,16 +42,16 @@ Tensor::Tensor(std::vector<size_t> size, float* data, bool calc_grad, Graph* gra
     _grad_graph(graph_context) {
         
     if(_calc_grad  && !_grad_graph->contains(*this) )
-        _grad_graph -> addNode( new Node(*this) );
+        _grad_graph -> addNode( new Node(this) );
     }
 
-Tensor::Tensor(SimpleTensor simple_tensor, bool calc_grad, Graph* graph_context) :
-    SimpleTensor(simple_tensor),
+Tensor::Tensor(SimpleTensor& simple_tensor, bool calc_grad, Graph* graph_context) :
+    SimpleTensor(std::move(simple_tensor)),
     _calc_grad(calc_grad),
     _grad_graph(graph_context) {
         
     if(_calc_grad  && !_grad_graph->contains(*this) )
-        _grad_graph -> addNode( new Node(*this) );
+        _grad_graph -> addNode( new Node(this) );
     }
 
 Tensor::~Tensor() {
@@ -86,7 +86,7 @@ void Tensor::setCalcGrad(bool val) {
 // }
 
 
-Tensor TensorOperations::add(Tensor t1, Tensor t2) {
+Tensor TensorOperations::add(Tensor& t1, Tensor& t2) {
     if( t1._size != t2._size )
         std::cout << "(+) tensors size problem?!";
 
@@ -117,7 +117,7 @@ Tensor TensorOperations::add(Tensor t1, Tensor t2) {
     SimpleTensor t3_simple = SimpleTensor(t1._size, t3_data);
 
     if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
+        Node* t3_node = new Node(&t3_simple); // !!!!
 
         t3_node -> setOperation("add");
         t3_graph_context -> addNode( t3_node );
@@ -135,58 +135,9 @@ Tensor TensorOperations::add(Tensor t1, Tensor t2) {
 }
 
 
-Tensor TensorOperations::mul(Tensor t1, Tensor t2) {
-    // cut out multipling and use operator* from simpletensor
-
-    // tensors are restricted to dimensions t1, t2 -> max 2dims.
-    // Derivative is not defined for higher dimensions. 
-    std::vector<size_t> s1 = t1._size;
-    std::vector<size_t> s2 = t2._size;
-
-    if(s1.size() > 2 || s2.size() > 2)
-        std::cout << "(+) too many dimensions to multiply correctly t1: " << s1.size() << "dims and t2: " << s1.size() << "dims ?!"; 
-
-    // if t2 is vector then it should be made transformed [d, 1]
+Tensor TensorOperations::mul(Tensor& t1, Tensor& t2) {
+    SimpleTensor* t3_simple = new SimpleTensor(t1 * t2);
     
-    // check for dim conditions
-    size_t last_dim = s1[s1.size()-1];
-    if( last_dim != s2[0]) // [a, b, ..., c, d] * [d, e] => [a, b, ..., c, e] 
-        std::cout << "?";
-
-    int number_of_all_rows = s1[0] * t1._cummulative_size[0] / last_dim; // a*b*...*c
-    int row_length = last_dim;
-    int t2_data_row_length = s2[ s2.size()-1 ];
-    int number_of_columns = s2[1];
-
-    // std::cout << "number_of_rows: " << number_of_all_rows << "\n";
-    // std::cout << "row_length: " << row_length << "\n";
-    // std::cout << "number_of_columns: " << number_of_columns << "\n";
-
-    float* t1_data_row_ptr = t1._data;
-    float* t3_data = new float[number_of_all_rows * number_of_columns]{0};
-
-    float* t1_data_ptr = t1._data;
-    float* t2_data_ptr = t2._data;
-    float* t3_data_ptr = t3_data;
-    
-    for(int row = 0; row < number_of_all_rows; row++, t1_data_row_ptr += row_length) {
-        for(int col = 0; col < number_of_columns; col++, t3_data_ptr++) {
-            t1_data_ptr = t1_data_row_ptr; // for each column the same row must be iterated
-            t2_data_ptr = t2._data + col; // iteration over column is taking element col from each row of matrix
-            
-            // t1 by elements in row. t2 by columns. row in t1 defines which element in each column t2
-            for(int i = 0; i < row_length; i++, t2_data_ptr += t2_data_row_length, t1_data_ptr++)
-                (*t3_data_ptr) += (*t1_data_ptr) * (*t2_data_ptr);
-        }
-    }
-
-    std::vector<size_t> s3(s1);
-    s3.pop_back();
-    s3.push_back(s2[ s2.size()-1 ]);
-
-    // adding node with local gradient to graph
-    // For now lets assume only one of the tensors has graph attached
-    // and its always left one. First attechment of graph need to be outside the Tensor
     bool t3_calc_grad = false;
     Graph* t3_graph_context = nullptr;
     if( t1._calc_grad || t2._calc_grad ) {
@@ -201,8 +152,6 @@ Tensor TensorOperations::mul(Tensor t1, Tensor t2) {
         t3_graph_context = t1._grad_graph;
     }
 
-    SimpleTensor t3_simple = SimpleTensor(s3, t3_data);
-
     if(t3_calc_grad) {
         Node* t3_node = new Node(t3_simple);
 
@@ -210,23 +159,25 @@ Tensor TensorOperations::mul(Tensor t1, Tensor t2) {
         t3_graph_context -> addNode( t3_node );
         t3_graph_context->getNode(t1) -> addChild(t3_node);
         t3_graph_context->getNode(t2) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t2));
+        t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t1));
+        t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t2));
 
         // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = mulDerivatives(t1, t2, t3_simple);
+        std::map<std::string, SimpleTensor*> derivatives = mulDerivatives(t1, t2, *t3_simple);
 
-        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, derivatives[t1]);
-        t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, derivatives[t2]);
+        t3_graph_context->getNode(t1) -> addLocalGradValue(*t3_simple, derivatives[t1]);
+        t3_graph_context->getNode(t2) -> addLocalGradValue(*t3_simple, derivatives[t2]);
+
     }
-    // std::cout << "done all\n";
+    std::cout << "done all\n";
 
-    return Tensor(t3_simple, t3_calc_grad, t1._grad_graph);
+    // move constructor makes t3_simple empty because of move
+    return Tensor(t3_simple->_size, t3_simple->_data, t3_calc_grad, t1._grad_graph);
 }
 
 
 // maybe all arguments should be simpletensor?
-std::map<std::string, SimpleTensor> TensorOperations::mulDerivatives(SimpleTensor t1, SimpleTensor t2, SimpleTensor t3) {
+std::map<std::string, SimpleTensor*> TensorOperations::mulDerivatives(SimpleTensor& t1, SimpleTensor& t2, SimpleTensor& t3) {
     std::vector<size_t> s1 = t1._size;
     std::vector<size_t> s2 = t2._size;
     std::vector<size_t> s3 = t3._size;
@@ -267,17 +218,17 @@ std::map<std::string, SimpleTensor> TensorOperations::mulDerivatives(SimpleTenso
     // if( std::count(der_t3byt2_size.begin(), der_t3byt2_size.end(), 1) == 2 )
     //     der_t3byt2_size.erase( std::remove(der_t3byt2_size.begin(), der_t3byt2_size.end(), 1), der_t3byt2_size.end() );
 
-    SimpleTensor der_t3byt1(der_t3byt1_size, der_t3byt1_data);
-    SimpleTensor der_t3byt2(der_t3byt2_size, der_t3byt2_data);
+    SimpleTensor* der_t3byt1 = new SimpleTensor(der_t3byt1_size, der_t3byt1_data);
+    SimpleTensor* der_t3byt2 = new SimpleTensor(der_t3byt2_size, der_t3byt2_data);
 
-    std::map<std::string, SimpleTensor> derivatives;
+    std::map<std::string, SimpleTensor*> derivatives;
     derivatives.insert({t1, der_t3byt1});
     derivatives.insert({t2, der_t3byt2});
     return derivatives;
 }
 
 
-Tensor TensorOperations::relu(Tensor t1) {
+Tensor TensorOperations::relu(Tensor& t1) {
     // data of result tensor
     float* t3_data = new float[t1._all_elements];
 
@@ -302,7 +253,7 @@ Tensor TensorOperations::relu(Tensor t1) {
     SimpleTensor t3_simple = SimpleTensor(t1._size, t3_data);
 
     if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
+        Node* t3_node = new Node(&t3_simple); // !!!!
 
         t3_node -> setOperation("relu");
         t3_graph_context -> addNode( t3_node );
@@ -310,14 +261,14 @@ Tensor TensorOperations::relu(Tensor t1) {
         t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
         
         // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = reluDerivatives(t1, t3_simple);
+        std::map<std::string, SimpleTensor*> derivatives = reluDerivatives(t1, t3_simple);
         t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, derivatives[t1]);
     }
 
     return Tensor(t3_simple, t3_calc_grad, t1._grad_graph);
 }
 
-std::map<std::string, SimpleTensor> TensorOperations::reluDerivatives(SimpleTensor t1, SimpleTensor t3) {
+std::map<std::string, SimpleTensor*> TensorOperations::reluDerivatives(SimpleTensor& t1, SimpleTensor& t3) {
     std::vector<size_t> s1 = t1._size;
     std::vector<size_t> s3 = t3._size;
 
@@ -334,15 +285,15 @@ std::map<std::string, SimpleTensor> TensorOperations::reluDerivatives(SimpleTens
                 *(der_t3byt1_data + + i*der_t3byt1_size[1]*der_t3byt1_size[2]*der_t3byt1_size[3] + j*der_t3byt1_size[2]*der_t3byt1_size[3] + j*der_t3byt1_size[3] + i) = (t1.at({j, i}) > 0);
     }
 
-    SimpleTensor der_t3byt1(der_t3byt1_size, der_t3byt1_data);
+    SimpleTensor* der_t3byt1 = new SimpleTensor(der_t3byt1_size, der_t3byt1_data);
     
-    std::map<std::string, SimpleTensor> derivatives;
+    std::map<std::string, SimpleTensor*> derivatives;
     derivatives.insert({t1, der_t3byt1});
     return derivatives;
 }
 
 
-Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
+Tensor TensorOperations::mseLoss(Tensor& predicted, SimpleTensor& real) {
     std::vector<size_t> p_size = predicted._size;
     std::vector<size_t> r_size = real._size;
 
@@ -369,25 +320,25 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
         t3_graph_context = predicted._grad_graph;
     }
 
-    SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
+    SimpleTensor* t3_simple = new SimpleTensor(t3_size, t3_data);
 
     if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
+        Node* t3_node = new Node(t3_simple); // !!!!
 
         t3_node -> setOperation("mse");
         t3_graph_context -> addNode( t3_node );
         t3_graph_context->getNode(predicted) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
+        t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(predicted));
         
         // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = mseLossDerivatives(predicted, real, t3_simple);
-        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
+        std::map<std::string, SimpleTensor*> derivatives = mseLossDerivatives(predicted, real, *t3_simple);
+        t3_graph_context->getNode(predicted) -> addLocalGradValue(*t3_simple, derivatives[predicted]);
     }
 
-    return Tensor(t3_simple, true, predicted._grad_graph);
+    return Tensor(t3_simple->_size, t3_simple->_data, true, predicted._grad_graph);
 }
 
-Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
+Tensor TensorOperations::cceLoss(Tensor& predicted, SimpleTensor& real) {
     std::vector<size_t> p_size = predicted._size;
     std::vector<size_t> r_size = real._size;
 
@@ -424,7 +375,7 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
     SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
 
     if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
+        Node* t3_node = new Node(&t3_simple); // !!!!
 
         t3_node -> setOperation("relu");
         t3_graph_context -> addNode( t3_node );
@@ -432,24 +383,24 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
         t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
         
         // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = cceLossDerivatives(predicted, real, t3_simple);
+        std::map<std::string, SimpleTensor*> derivatives = cceLossDerivatives(predicted, real, t3_simple);
         t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
     }
     return Tensor(t3_simple, true, predicted._grad_graph);
 }
 
-std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
+std::map<std::string, SimpleTensor*> TensorOperations::mseLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
     std::vector<size_t> t3_size{1, 1};
     float* t3_data = new float[1];
 
-    t3_data[0] = 2 * (predicted._data[0] - real._data[0]);
+    t3_data[0] = 2 * (predicted._data[0] - real._data[0]); // this can be chabges to do w = w + lr*dw  instead of w = w - lr*dw
 
-    std::map<std::string, SimpleTensor> derivatives;
-    derivatives.insert({predicted, SimpleTensor(t3_size, t3_data)});
+    std::map<std::string, SimpleTensor*> derivatives;
+    derivatives.insert({predicted, new SimpleTensor(t3_size, t3_data)});
     return derivatives;
 }
 
-std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
+std::map<std::string, SimpleTensor*> TensorOperations::cceLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
     // std::vector<float> res(vec.size(), 0);
     // for(int i=0; i<vec.size(); i++) {
     //     float x=0, y=0, sec=0;
@@ -465,8 +416,8 @@ std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleT
 
     // SimpleTensor der_t3byt1(der_t3byt1_size, der_t3byt1_data);
  
-    std::map<std::string, SimpleTensor> derivatives;
-    derivatives.insert({predicted, SimpleTensor()});
+    std::map<std::string, SimpleTensor*> derivatives;
+    derivatives.insert({predicted, new SimpleTensor()});
     return derivatives;
 }
 

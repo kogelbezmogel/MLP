@@ -2,62 +2,107 @@
 #include <vector>
 #include <chrono>
 
-#include "optimizer.h"
-#include "model.h"
+#include "tensor.h"
+// #include "optimizer.h"
+// #include "model.h"
 #include "utils.h"
-#include "dataloader.h"
+// #include "dataloader.h"
+
+// SimpleTensor mul2(SimpleTensor& st1, SimpleTensor& st2) {
+//     SimpleTensor st3;
+//     st3 = st1 * st2;
+//     return st3;
+// }
+
+// SimpleTensor mul1() {
+//     SimpleTensor st1({2, 3}, {1, 2, 3, 4, 5, 6});
+//     SimpleTensor st2({3, 2}, {1, 2, 3, 4, 5, 6});
+//     SimpleTensor st3;
+//     st3 = mul2(st1, st2);
+//     return st3;
+// }
 
 
 int main() {
     // time_test_model();
+
+    // mul();
+
+    // SimpleTensor st1({2, 3}, {1, 2, 3, 4, 5, 6});
+    // SimpleTensor st2({3, 2}, {1, 2, 3, 4, 5, 6});
+    // // SimpleTensor st3 = st1 * st2;
+    // SimpleTensor st3 = mul1();
+
+    // std::cout << st3;
+
+    // SimpleTensor st4 = st2.slice(0, 2);
+    // SimpleTensor st5 = st4 * st3;
+
+    // std::cout << st5 << "\n";
+
+    Graph* graph = new Graph();
+    Tensor t1({1, 3}, {1, 2, 3}, true, graph);
+    Tensor t2({3, 1}, {1, 2, 3}, true, graph);
+
+    Tensor t3 = TensorOperations::mul(t1, t2);
+    // std::cout << t3;
+
+    SimpleTensor real({1, 1}, {0.5});
+    SimpleTensor loss = TensorOperations::mseLoss(t3, real);
+
+    graph->saveGraphToFile("graph.dot");
+    graph->backwards();
+
+    std::cout << "return 0\n";
+    return 0;
 }
 
 
-// 50 samples dataset (2, 16, relu) (16, 3, relu) (3, 1, relu) -> 12.5s 13s 13.5s
+// 50 samples dataset , 50 epochs (2, 16, relu) (16, 3, relu) (3, 1, relu) -> 12.5s 13s 13.5s
 
 
 
-void time_test_model() {
-    Model model({
-        new Layer(2, 16, true, "relu"),
-        new Layer(16, 3, true, "relu"),
-        new Layer(3, 1, false, ""),
-    });
+// void time_test_model() {
+//     Model model({
+//         new Layer(2, 16, true, "relu"),
+//         new Layer(16, 3, true, "relu"),
+//         new Layer(3, 1, false, ""),
+//     });
 
-    Optimizer optim(model, 0.001);
+//     Optimizer optim(model, 0.001);
 
-    size_t batch_size = 10;
-    SimpleTensor sample;
-    SimpleTensor y_real;
-    Tensor y_pred, loss_value;
+//     size_t batch_size = 10;
+//     SimpleTensor sample;
+//     SimpleTensor y_real;
+//     Tensor y_pred, loss_value;
 
-    auto start = std::chrono::high_resolution_clock::now();
+//     auto start = std::chrono::high_resolution_clock::now();
 
-    int num = 0;
-    for(int epoch = 0; epoch < 50; epoch++) {
-        Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
-        for(Batch batch : dataloader) {
-            for(int i = 0; i < batch.x.getSize()[0]; i++) {
-                y_real = batch.y[i].reshape({1, 1});
-                sample = batch.x[i].reshape({2, 1});
+//     int num = 0;
+//     for(int epoch = 0; epoch < 50; epoch++) {
+//         Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
+//         for(Batch batch : dataloader) {
+//             for(int i = 0; i < batch.x.getSize()[0]; i++) {
+//                 y_real = batch.y[i].reshape({1, 1});
+//                 sample = batch.x[i].reshape({2, 1});
 
-                y_pred = model(sample);
+//                 y_pred = model(sample);
 
-                loss_value = TensorOperations::mseLoss(y_pred, y_real);
-                loss_value.getGraphContext()->backwards();
+//                 loss_value = TensorOperations::mseLoss(y_pred, y_real);
+//                 loss_value.getGraphContext()->backwards();
 
-                optim.step();
-                // std::cout << num << " loss: " << std::sqrt(loss_value.at({0, 0})) << "\n";
-                num++;
-            }
-        }
-    }
+//                 optim.step();
+//                 // std::cout << num << " loss: " << std::sqrt(loss_value.at({0, 0})) << "\n";
+//                 num++;
+//             }
+//         }
+//     }
 
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "time: " << duration.count() << " miliseconds\n";
-    std::cout << "ret0";
-}
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+//     std::cout << "time: " << duration.count() << " miliseconds\n";
+//     std::cout << "ret0";
+// }
 
 
 // int dataloader_test() {

@@ -12,6 +12,7 @@ SimpleTensor::SimpleTensor(): _slice{false}, _empty{true}, _all_elements{0} {
     _size = std::vector<size_t>{0};
 }
 
+
 SimpleTensor::SimpleTensor(float value): SimpleTensor(std::vector<size_t>{1}, value) { }
 
 
@@ -28,6 +29,7 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, float init) : _size{size}, 
     evaluateCummulatives();
     evaluateId();
 }
+
 
 SimpleTensor::SimpleTensor(std::vector<size_t> size, std::vector<float> data) : _size{size}, _slice{false} {
     size_t all_elements = 1;
@@ -49,7 +51,8 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, std::vector<float> data) : 
     evaluateId();
 }
 
-SimpleTensor::SimpleTensor(std::vector<size_t> size, float* data) : _size{size}, _data{data}, _slice{true} {
+
+SimpleTensor::SimpleTensor(std::vector<size_t> size, float* data, bool slice) : _size{size}, _data{data}, _slice{slice} {
     size_t all_elements = 1;
     for(size_t k : size)
         all_elements *= k;
@@ -60,17 +63,85 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, float* data) : _size{size},
 }
 
 
-SimpleTensor::~SimpleTensor() {
-    // change to shhared pointer later
-    // if(_slice == false)
-    //     delete  []_data; // shared pointer
+SimpleTensor::SimpleTensor(SimpleTensor&& to_move) {
+    // std::cout << "move: " << to_move._id << "\n";
+    // moving
+    _cummulative_size = std::move(to_move._cummulative_size);
+    _size = std::move(to_move._size);
+    _empty = to_move._empty;
+    _id = to_move._id;
+    _all_elements = to_move._all_elements;
+    _data = to_move._data;
+    _slice = to_move._slice;  
+
+    // make to_move empty
+    to_move._cummulative_size.clear();
+    to_move._size.clear();
+    to_move._id = "";
+    to_move._all_elements = 0;
+    to_move._data = nullptr;
+    to_move._slice = false;
 }
 
 
-SimpleTensor SimpleTensor::identity(size_t size) {
-    SimpleTensor tens = SimpleTensor({size, size}, 0.0);
+SimpleTensor& SimpleTensor::operator=(SimpleTensor && to_move) {
+    // std::cout << "=move: " << to_move._id << "\n";
+    
+    // freeing old memory
+    if(_slice == false)
+        delete [] _data;
+    
+    // moving
+    _cummulative_size = std::move(to_move._cummulative_size);
+    _size = std::move(to_move._size);
+    _empty = to_move._empty;
+    _id = to_move._id;
+    _all_elements = to_move._all_elements;
+    _data = to_move._data;
+    _slice = to_move._slice;  
+
+    // make to_move empty
+    to_move._cummulative_size.clear();
+    to_move._size.clear();
+    to_move._id = "";
+    to_move._all_elements = 0;
+    to_move._data = nullptr;
+    to_move._slice = false;
+
+    return (*this);
+}
+
+
+SimpleTensor::SimpleTensor(const SimpleTensor& to_copy) {
+    // std::cout << "copy: " << to_copy._id << "\n";
+    _cummulative_size = to_copy._cummulative_size;
+    _size = to_copy._size;
+    _empty = to_copy._empty;
+    _all_elements = to_copy._all_elements;
+    _slice = false;  
+    
+    _data = new float[_all_elements];
+    for(int i = 0; i < _all_elements; i++)
+        _data[i] = to_copy._data[i];
+    evaluateId();
+}
+
+
+SimpleTensor::~SimpleTensor() {
+    // std::cout << "destructor : " << _id;
+    // if(_data == nullptr)
+    //     std::cout << " empty \n";
+    // else
+    //     std::cout << "\n";
+    if(_slice == false)
+        delete [] _data; 
+}
+
+
+SimpleTensor* SimpleTensor::identity(size_t size) {
+    SimpleTensor* tens = new SimpleTensor({size, size}, 0.0);
     for(int i = 0; i < size; i++)
-        tens._data[i + i * size] = 1;
+        tens -> _data[i + i * size] = 1;
     return tens;
 }
 
@@ -82,13 +153,14 @@ SimpleTensor SimpleTensor::rand(std::vector<size_t> size, std::pair<float, float
     std::mt19937 rand_engine;
     rand_engine.seed(101);
 
-    std::uniform_real_distribution distribution(0.0, 1.0);
+    std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
     for(int i = 0; i < tens._all_elements; i++)
         tens._data[i] = distribution(rand_engine);
 
     return tens;
 }
+
 
 void SimpleTensor::evaluateCummulatives() {
     _cummulative_size = std::vector<size_t>(_size.size());
@@ -99,6 +171,7 @@ void SimpleTensor::evaluateCummulatives() {
         _cummulative_size[i] = cummulation;
     }
 }
+
 
 void SimpleTensor::evaluateId() {
     std::stringstream ss;
@@ -111,6 +184,7 @@ void SimpleTensor::evaluateId() {
     
     _id = id;
 }
+
 
 std::vector<size_t> SimpleTensor::getSize() const { return _size; };
 
@@ -141,8 +215,9 @@ SimpleTensor SimpleTensor::operator[] (size_t idx) {
         std::cout << "?";
     }
 
-    return SimpleTensor(size, slice_start);
+    return SimpleTensor(size, slice_start, true);
 }
+
 
 const SimpleTensor SimpleTensor::operator[] (size_t idx) const {
     float *slice_start{nullptr};
@@ -161,8 +236,9 @@ const SimpleTensor SimpleTensor::operator[] (size_t idx) const {
         std::cout << "?";
     }
 
-    return SimpleTensor(size, slice_start);
+    return SimpleTensor(size, slice_start, true);
 }
+
 
 float SimpleTensor::at(std::vector<size_t> point) const {
     // add some size table instead of calculating it every time
@@ -194,8 +270,7 @@ SimpleTensor SimpleTensor::operator+= (SimpleTensor t1) {
 }
 
 
-
-SimpleTensor operator+(SimpleTensor t1, SimpleTensor t2) {
+SimpleTensor operator+(SimpleTensor& t1, SimpleTensor& t2) {
     if( t1._size != t2._size )
         std::cout << "(+) dimensions do not match: " << str_representation(t1._size) << " vs " << str_representation(t2._size) << "?!\n";
 
@@ -206,10 +281,11 @@ SimpleTensor operator+(SimpleTensor t1, SimpleTensor t2) {
     for(int i = 0; i < t1._all_elements; i++)
         t3_data[i] = t1._data[i] + t2._data[i];
 
-    return SimpleTensor(t1._size, t3_data);
+    return SimpleTensor(t1._size, t3_data, false);
 }
 
-SimpleTensor operator*(float sc, SimpleTensor t1) {
+
+SimpleTensor operator*(float sc, SimpleTensor& t1) {
     // std::cout << "scalar * tensor\n";
 
     // data of result tensor
@@ -219,11 +295,11 @@ SimpleTensor operator*(float sc, SimpleTensor t1) {
     for(int i = 0; i < t1._all_elements; i++)
         t3_data[i] = sc * t1._data[i] ;
 
-    return SimpleTensor(t1._size, t3_data);
+    return SimpleTensor(t1._size, t3_data, false);
 }
 
 
-SimpleTensor operator*(SimpleTensor t1, SimpleTensor t2) {
+SimpleTensor operator*(SimpleTensor& t1, SimpleTensor& t2) {
     std::vector<size_t> s1 = t1._size;
     std::vector<size_t> s2 = t2._size;
 
@@ -261,14 +337,11 @@ SimpleTensor operator*(SimpleTensor t1, SimpleTensor t2) {
     s3.pop_back();
     s3.push_back(s2[ s2.size()-1 ]);
 
-    return SimpleTensor(s3, t3_data);
+    return SimpleTensor(s3, t3_data, false);
 }
 
 
-
-
-
-void print_rec(std::ostream& os, const SimpleTensor tensor, int depth) {
+void print_rec(std::ostream& os, const SimpleTensor& tensor, int depth) {
     std::vector<size_t> size( tensor.getSize() );
 
     if( size.size() == 1 ) {
@@ -292,12 +365,14 @@ void print_rec(std::ostream& os, const SimpleTensor tensor, int depth) {
     }
 }
 
+
 void print_size(std::ostream& os, const std::vector<size_t> vec) {
     os << "[" << vec[0];
     for(int i = 1; i < vec.size(); i++)
         os << ", " << vec[i];
     os << "]";
 }
+
 
 std::ostream& operator<< (std::ostream& os, const SimpleTensor& tensor) {
     std::vector<size_t> size = tensor.getSize();
@@ -307,4 +382,3 @@ std::ostream& operator<< (std::ostream& os, const SimpleTensor& tensor) {
     os << ")";
     return os;
 }
-

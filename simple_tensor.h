@@ -6,9 +6,9 @@
 class SimpleTensor {
 
     friend class TensorOperations;
-    friend SimpleTensor operator*(SimpleTensor t1, SimpleTensor t2);
-    friend SimpleTensor operator*(float sc, SimpleTensor t1);
-    friend SimpleTensor operator+(SimpleTensor t1, SimpleTensor t2);
+    friend SimpleTensor operator*(SimpleTensor& t1, SimpleTensor& t2);
+    friend SimpleTensor operator*(float sc, SimpleTensor& t1);
+    friend SimpleTensor operator+(SimpleTensor& t1, SimpleTensor& t2);
     friend class Model;
     
     public:
@@ -20,11 +20,15 @@ class SimpleTensor {
 
         SimpleTensor(std::vector<size_t> size, std::vector<float> data);
 
-        SimpleTensor(std::vector<size_t> size, float* data);
+        SimpleTensor(std::vector<size_t> size, float* data, bool slice=false);
+
+        SimpleTensor(SimpleTensor&& to_move);
+
+        SimpleTensor& operator=(SimpleTensor && to_move);
 
         ~SimpleTensor();
 
-        static SimpleTensor identity(size_t size);
+        static SimpleTensor* identity(size_t size);
 
         static SimpleTensor rand(std::vector<size_t> size, std::pair<float, float> range);
 
@@ -42,10 +46,14 @@ class SimpleTensor {
 
         void trim();
 
+        SimpleTensor copy(const SimpleTensor to_copy) {
+            return SimpleTensor(to_copy);
+        }
+
         SimpleTensor slice(size_t start, size_t end) {  // needs to be more roboust
             std::vector< size_t> r_size(_size);
             r_size[0] = end - start;
-            return SimpleTensor(r_size, _data + start * _cummulative_size[0] );
+            return SimpleTensor(r_size, _data + start * _cummulative_size[0], true);
         }
 
         // std::string getId() { return _id; }
@@ -66,17 +74,21 @@ class SimpleTensor {
         std::string _id;
         size_t _all_elements {0};
         float* _data {nullptr};
-        bool _slice {true};     
+        bool _slice;   
+
+    private:
+        // copy constructor shuld never be used in default.
+        SimpleTensor(const SimpleTensor& to_copy);  
 
 };
 
-SimpleTensor operator*(float sc, SimpleTensor t1);
+SimpleTensor operator*(float sc, SimpleTensor& t1);
 
-SimpleTensor operator*(SimpleTensor t1, SimpleTensor t2);
+SimpleTensor operator*(SimpleTensor& t1, SimpleTensor& t2);
 
-SimpleTensor operator+(SimpleTensor t1, SimpleTensor t2);
+SimpleTensor operator+(SimpleTensor& t1, SimpleTensor& t2);
 
-void print_rec(std::ostream& os, const SimpleTensor tensor, int depth=0);
+void print_rec(std::ostream& os, const SimpleTensor& tensor, int depth=0);
 
 void print_size(std::ostream& os, const std::vector<size_t> vec);
 

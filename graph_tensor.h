@@ -36,7 +36,9 @@ class Graph {
 
         Node* getNode(std::string tensor_name);
 
-        bool contains(std::string tensor_name) const { return _nodes_map.count(tensor_name); }
+        bool contains(std::string tensor_name) const {
+            return _nodes_map.count(tensor_name);
+        }
 
         const std::vector<Node*> get_nodes() const { return _nodes; };
 
