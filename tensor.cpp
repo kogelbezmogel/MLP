@@ -27,13 +27,13 @@ Tensor::Tensor(std::vector<size_t> size, float init, bool calc_grad, Graph* grap
         _grad_graph -> addNode( new Node(this) );
     }
 
-Tensor::Tensor(std::vector<size_t> size, std::vector<float> data, bool calc_grad, Graph* graph_context) :
+Tensor::Tensor(std::vector<size_t> size, std::vector<float> data, bool calc_grad, Graph* graph_context, bool is_input) :
     SimpleTensor(size, data),
     _calc_grad(calc_grad),
     _grad_graph(graph_context) {
      
     if(_calc_grad  && !_grad_graph->contains(*this))
-        _grad_graph -> addNode( new Node(this) );
+        _grad_graph -> addNode( new Node(this, is_input) );
     }
 
 Tensor::Tensor(std::vector<size_t> size, float* data, bool calc_grad, Graph* graph_context) :
@@ -50,9 +50,18 @@ Tensor::Tensor(SimpleTensor& simple_tensor, bool calc_grad, Graph* graph_context
     _calc_grad(calc_grad),
     _grad_graph(graph_context) {
         
+    std::cout << "Probably you didn't intend to use me\n";
     if(_calc_grad  && !_grad_graph->contains(*this) )
         _grad_graph -> addNode( new Node(this) );
     }
+
+Tensor::Tensor(Tensor&& to_move) : SimpleTensor(std::move(to_move)) {
+    _calc_grad = to_move._calc_grad;
+    _grad_graph = to_move._grad_graph;
+
+    to_move._calc_grad = false;
+    to_move._grad_graph = nullptr;
+}
 
 Tensor::~Tensor() {
     // change to shhared pointer later
@@ -72,6 +81,15 @@ void Tensor::setCalcGrad(bool val) {
     _calc_grad = val;
 }
 
+Tensor& Tensor::operator=(Tensor&& to_move) {
+    SimpleTensor::operator=(std::move(to_move));
+    _calc_grad = to_move._calc_grad;
+    _grad_graph = to_move._grad_graph;
+
+    to_move._calc_grad = false;
+    to_move._grad_graph = nullptr;
+    return *this;
+}
 
 // ############################## external functions ################################
 
@@ -114,24 +132,24 @@ Tensor TensorOperations::add(Tensor& t1, Tensor& t2) {
         t3_graph_context = t1._grad_graph;
     }
 
-    SimpleTensor t3_simple = SimpleTensor(t1._size, t3_data);
+    SimpleTensor* t3_simple = new SimpleTensor(t1._size, t3_data);
 
     if(t3_calc_grad) {
-        Node* t3_node = new Node(&t3_simple); // !!!!
+        Node* t3_node = new Node(t3_simple);
 
         t3_node -> setOperation("add");
         t3_graph_context -> addNode( t3_node );
         t3_graph_context->getNode(t1) -> addChild(t3_node);
         t3_graph_context->getNode(t2) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t2));
+        t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t1));
+        t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t2));
 
         // adding derivatives
-        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t1.getSize()[0] ));
-        t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t2.getSize()[0] ));
+        t3_graph_context->getNode(t1) -> addLocalGradValue(*t3_simple, SimpleTensor::identity( t1.getSize()[0] ));
+        t3_graph_context->getNode(t2) -> addLocalGradValue(*t3_simple, SimpleTensor::identity( t2.getSize()[0] ));
     }
 
-    return Tensor(t3_simple, t3_calc_grad, t1._grad_graph);
+    return Tensor(t3_simple->_size, t3_simple->_data, t3_calc_grad, t1._grad_graph);
 }
 
 
@@ -167,9 +185,8 @@ Tensor TensorOperations::mul(Tensor& t1, Tensor& t2) {
 
         t3_graph_context->getNode(t1) -> addLocalGradValue(*t3_simple, derivatives[t1]);
         t3_graph_context->getNode(t2) -> addLocalGradValue(*t3_simple, derivatives[t2]);
-
     }
-    std::cout << "done all\n";
+    // std::cout << "done all\n";
 
     // move constructor makes t3_simple empty because of move
     return Tensor(t3_simple->_size, t3_simple->_data, t3_calc_grad, t1._grad_graph);
@@ -200,7 +217,7 @@ std::map<std::string, SimpleTensor*> TensorOperations::mulDerivatives(SimpleTens
     for(size_t i = 0; i < der_t3byt1_size[0]; i++) {
         for(size_t j = 0; j < der_t3byt1_size[1]; j++)
             for(size_t k = 0; k < der_t3byt1_size[2]; k++)
-                *(der_t3byt1_data + + i*der_t3byt1_size[1]*der_t3byt1_size[2]*der_t3byt1_size[3] + j*der_t3byt1_size[2]*der_t3byt1_size[3] + k*der_t3byt1_size[3] + i) = t2.at({j, k});
+                *(der_t3byt1_data + i*der_t3byt1_size[1]*der_t3byt1_size[2]*der_t3byt1_size[3] + j*der_t3byt1_size[2]*der_t3byt1_size[3] + k*der_t3byt1_size[3] + i) = t2.at({j, k});
     }
 
     // diag_len = std::min(der_t3byt2_size[0], der_t3byt2_size[ der_t3byt2_size.size()-1 ] )  ;
@@ -209,14 +226,6 @@ std::map<std::string, SimpleTensor*> TensorOperations::mulDerivatives(SimpleTens
             for(size_t l = 0; l < der_t3byt2_size[3]; l++)
                 *(der_t3byt2_data + i*der_t3byt2_size[1]*der_t3byt2_size[2]*der_t3byt2_size[3] + j*der_t3byt2_size[2]*der_t3byt2_size[3] + j*der_t3byt2_size[3] + l) = t1.at({l, i});
     }
-
-    // if there is n x 1 x 1 x m then it can be reduced to n x m. Because whatere will be multiplied the result will be n x 1 x 1 x k x ...
-    // and because vector is always [k x 1] uneven dimensions don't exists then only if there is pair of 1, tensor can be reduced in dimensionality
-    // removing pair of 1
-    // if( std::count(der_t3byt1_size.begin(), der_t3byt1_size.end(), 1) == 2 )
-    //     der_t3byt1_size.erase( std::remove(der_t3byt1_size.begin(), der_t3byt1_size.end(), 1), der_t3byt1_size.end() );
-    // if( std::count(der_t3byt2_size.begin(), der_t3byt2_size.end(), 1) == 2 )
-    //     der_t3byt2_size.erase( std::remove(der_t3byt2_size.begin(), der_t3byt2_size.end(), 1), der_t3byt2_size.end() );
 
     SimpleTensor* der_t3byt1 = new SimpleTensor(der_t3byt1_size, der_t3byt1_data);
     SimpleTensor* der_t3byt2 = new SimpleTensor(der_t3byt2_size, der_t3byt2_data);

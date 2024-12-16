@@ -41,17 +41,37 @@ int main() {
     // std::cout << st5 << "\n";
 
     Graph* graph = new Graph();
-    Tensor t1({1, 3}, {1, 2, 3}, true, graph);
-    Tensor t2({3, 1}, {1, 2, 3}, true, graph);
+    Tensor x1( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
 
-    Tensor t3 = TensorOperations::mul(t1, t2);
-    // std::cout << t3;
-
+    Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);
+    Tensor b1({2, 1}, {3, 3}, true, graph, false);
+    Tensor w2({1, 2}, {1, 2}, true, graph, false);
+    Tensor b2({1, 1}, {1}, true, graph, false);
     SimpleTensor real({1, 1}, {0.5});
-    SimpleTensor loss = TensorOperations::mseLoss(t3, real);
+
+    SimpleTensor loss;
+    Tensor predict;
+
+    // firat sample
+    predict = TensorOperations::mul(w1, x1);
+    predict = TensorOperations::add(predict, b1);
+    predict = TensorOperations::mul(w2, predict);
+    predict = TensorOperations::add(predict, b2);
+    loss = TensorOperations::mseLoss(predict, real);
+    graph->backwards();
+
+    graph->clearSequence();
+    // second samples
+    Tensor x2( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
+    predict = TensorOperations::mul(w1, x2);
+    predict = TensorOperations::add(predict, b1);
+    predict = TensorOperations::mul(w2, predict);
+    predict = TensorOperations::add(predict, b2);
+    loss = TensorOperations::mseLoss(predict, real);
+    graph->backwards();
+
 
     graph->saveGraphToFile("graph.dot");
-    graph->backwards();
 
     std::cout << "return 0\n";
     return 0;

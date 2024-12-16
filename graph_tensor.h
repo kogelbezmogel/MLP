@@ -20,11 +20,11 @@ class Graph {
     public:
         Graph();
 
+        ~Graph();
+
         void backwards();
 
         Node* operator[] (std::string tensor_name);
-
-        // SimpleTensor operator()( );
 
         void orderNodesRec( std::map<Node*, bool>& visited, Node* node);
 

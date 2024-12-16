@@ -22,15 +22,19 @@ class Tensor : public SimpleTensor {
 
         Tensor(std::vector<size_t> size, float init, bool calcGrad = false, Graph* graphContext = nullptr);
 
-        Tensor(std::vector<size_t> size, std::vector<float> data, bool calcGrad = false, Graph* graphContext = nullptr);
+        Tensor(std::vector<size_t> size, std::vector<float> data, bool calcGrad = false, Graph* graphContext = nullptr, bool _is_input = true);
 
         Tensor(std::vector<size_t> size, float* data, bool calcGrad = false, Graph* graphContext = nullptr);
 
         Tensor(SimpleTensor& simple_tensor, bool calcGrad = false, Graph* graphContext = nullptr);
 
+        Tensor(Tensor&& to_move);
+
         ~Tensor();
 
         void setGrapContext(Graph* graph_ptr);
+
+        Tensor& operator=(Tensor&& to_move);
 
         Graph* getGraphContext();
 

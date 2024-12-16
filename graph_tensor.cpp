@@ -13,54 +13,56 @@ int Node::node_num = 0;
 Graph::Graph() {
 };
 
+Graph::~Graph() {
+    for(Node* node : _nodes)
+        delete node;
+}
+
 void Graph::backwards() {
 
-    for(Node* node : _nodes) {
-        std::cout << node -> getId() << " | children: ";
-        for(Node* child: node -> getChildren())    
-            std::cout << child -> getId() << " ";
-        std::cout << "| parents: ";
-        for(Node* parent: node -> getParents())    
-            std::cout << parent -> getId() << " ";
-        std::cout << "|\n";
-    }
+    // for(Node* node : _nodes) {
+    //     std::cout << node -> getId() << " | children: ";
+    //     for(Node* child: node -> getChildren())    
+    //         std::cout << child -> getId() << " ";
+    //     std::cout << "| parents: ";
+    //     for(Node* parent: node -> getParents())    
+    //         std::cout << parent -> getId() << " ";
+    //     std::cout << "|\n";
+    // }
 
-    for(Node* node : _nodes) {
-        std::cout << *(node -> getValue()) << "\n\n";
-    }
-
-    
-
+    // for(Node* node : _nodes) {
+    //     std::cout << *(node -> getValue()) << "\n\n";
+    // }
     //sotrgin nodes
     orderNodes();
 
     // setting local_grad and grad of last node to 1
     Node* last_node = _nodes_in_order[ _nodes_in_order.size()-1 ];
 
-    std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue()->getSize() ) << "\n";
+    // std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue()->getSize() ) << "\n";
     last_node -> setWholeGradValue( new SimpleTensor(last_node->getValue() -> getSize(), 1.0) );
 
     SimpleTensor* grad_value;
     for(std::vector<Node*>::reverse_iterator ite = _nodes_in_order.rbegin() + 1; ite != _nodes_in_order.rend(); ite++) {
-        std::cout << (*ite)->getId() << ":   0";
+        // std::cout << (*ite)->getId() << ":   0";
         grad_value = new SimpleTensor();
         for(Node* child : (*ite) -> getChildren() ) {
-            (*grad_value) += (*((*ite)->getLocalGradValues()[child->getId()])) * (*(child->getWholeGradValue()));
-            std::cout << " + mul(" 
-                      << str_representation((*ite)->getLocalGradValues()[child->getId()] -> getSize())
-                      << " * "
-                      << str_representation(child->getWholeGradValue() -> getSize())
-                      << ")";
+            (*grad_value) += (*((*ite)->getLocalGradValues()[child->getId()])) * (*(child->getWholeGradValue())); //this is ugly
+        //     std::cout << " + mul(" 
+        //               << str_representation((*ite)->getLocalGradValues()[child->getId()] -> getSize())
+        //               << " * "
+        //               << str_representation(child->getWholeGradValue() -> getSize())
+        //               << ")";
         }
         grad_value -> trim();
-        std::cout << " = " << str_representation( grad_value -> getSize() ) << "\n";
+        // std::cout << " = " << str_representation( grad_value -> getSize() ) << "\n";
         (*ite) -> setWholeGradValue(grad_value);
     }
 }
 
 bool Graph::addNode(Node* node_ptr) {
     _nodes.push_back(node_ptr);
-    std::cout << "node " << node_ptr->getId() << ": " << node_ptr << "\n";
+    // std::cout << "node " << node_ptr->getId() << ": " << node_ptr << "\n";
     _nodes_map.insert( { node_ptr->getId(), node_ptr} );
     // std::cout << "adding node: " << node_ptr->getId() << " " << str_representation(node_ptr->getValue().getSize()) << "\n";
     return true;

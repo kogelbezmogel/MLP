@@ -30,7 +30,7 @@ class SimpleTensor {
 
         static SimpleTensor* identity(size_t size);
 
-        static SimpleTensor rand(std::vector<size_t> size, std::pair<float, float> range);
+        static SimpleTensor* rand(std::vector<size_t> size, std::pair<float, float> range);
 
         SimpleTensor operator[] (size_t idx);
 

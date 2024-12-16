@@ -146,8 +146,8 @@ SimpleTensor* SimpleTensor::identity(size_t size) {
 }
 
 
-SimpleTensor SimpleTensor::rand(std::vector<size_t> size, std::pair<float, float> range) {
-    SimpleTensor tens = SimpleTensor({size}, 0.0);
+SimpleTensor* SimpleTensor::rand(std::vector<size_t> size, std::pair<float, float> range) {
+    SimpleTensor* tens = new SimpleTensor({size}, 0.0);
     
     // this need to be placed as some global value
     std::mt19937 rand_engine;
@@ -155,8 +155,8 @@ SimpleTensor SimpleTensor::rand(std::vector<size_t> size, std::pair<float, float
 
     std::uniform_real_distribution<float> distribution(0.0, 1.0);
 
-    for(int i = 0; i < tens._all_elements; i++)
-        tens._data[i] = distribution(rand_engine);
+    for(int i = 0; i < tens -> _all_elements; i++)
+        tens -> _data[i] = distribution(rand_engine);
 
     return tens;
 }
