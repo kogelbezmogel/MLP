@@ -10,15 +10,18 @@
 
 class Node {
     public:
-        Node(SimpleTensor* value_ptr, bool is_input=true) : _is_input{is_input} {
-            _input = value_ptr;
-            _node_id = (std::string) (*value_ptr);
+        Node(const SimpleTensor& value, bool is_input=true) : _is_input{is_input}, _input{value} {
+            _node_id = (std::string) (value);
             node_num++;
         };
 
-        SimpleTensor* getValue() { return _input; };
+        ~Node() {
+            // std::cout << __PRETTY_FUNCTION__ << " " << _node_id << "\n";
+        }
 
-        const SimpleTensor* getValue() const { return _input; };
+        SimpleTensor getValue() { return _input; };
+
+        const SimpleTensor getValue() const { return _input; };
 
         std::string getId() const { return _node_id; };
 
@@ -26,9 +29,9 @@ class Node {
 
         const std::vector<Node*> getParents() const { return _parents; };
 
-        SimpleTensor* getWholeGradValue() { return _whole_gradient_value; };
+        SimpleTensor getWholeGradValue() { return _whole_gradient_value; };
 
-        std::map<std::string, SimpleTensor*> getLocalGradValues() { return _local_gradient_values; };
+        std::map<std::string, SimpleTensor> getLocalGradValues() { return _local_gradient_values; };
 
         std::string getOperation() { return _operation; };
 
@@ -38,14 +41,14 @@ class Node {
         
         void setOperation(std::string operation) { _operation = operation; };
         
-        void setWholeGradValue( SimpleTensor* value ) { _whole_gradient_value = value; };
+        void setWholeGradValue( SimpleTensor value ) { _whole_gradient_value = value; };
 
         void addParent(Node* parent) { _parents.push_back(parent); };
         
         void addChild(Node* child) { _children.push_back(child); };
         
-        void addLocalGradValue(std::string tensor_name, SimpleTensor* local_grad) { 
-            // std::cout << "inserting: " << tensor_name << " in node:" << _node_id <<  "\n"; 
+        void addLocalGradValue(std::string tensor_name, SimpleTensor local_grad) { 
+        //     // std::cout << "inserting: " << tensor_name << " in node:" << _node_id <<  "\n"; 
             _local_gradient_values.insert({tensor_name, local_grad});
         };
 
@@ -56,12 +59,12 @@ class Node {
         bool hasChildren() { return _children.size() > 0; }
 
     private:
-        SimpleTensor* _input;
+        SimpleTensor _input;
         std::vector<Node*> _children;
         std::vector<Node*> _parents;
         std::string _operation;
-        std::map<std::string, SimpleTensor*> _local_gradient_values;
-        SimpleTensor* _whole_gradient_value;
+        std::map<std::string, SimpleTensor> _local_gradient_values;
+        SimpleTensor _whole_gradient_value;
 
         static int node_num;
         std::string _node_id;

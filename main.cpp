@@ -7,72 +7,31 @@
 // #include "model.h"
 #include "utils.h"
 // #include "dataloader.h"
+// #include "simple_tensor.h"
 
-// SimpleTensor mul2(SimpleTensor& st1, SimpleTensor& st2) {
-//     SimpleTensor st3;
-//     st3 = st1 * st2;
-//     return st3;
+// void mul(Graph* graph) {
+//     SimpleTensor x1_s = SimpleTensor::rand({3, 1}, {0, 1});
+//     Tensor x1(x1_s, true, graph);
 // }
 
-// SimpleTensor mul1() {
-//     SimpleTensor st1({2, 3}, {1, 2, 3, 4, 5, 6});
-//     SimpleTensor st2({3, 2}, {1, 2, 3, 4, 5, 6});
-//     SimpleTensor st3;
-//     st3 = mul2(st1, st2);
-//     return st3;
-// }
 
 
 int main() {
-    // time_test_model();
-
-    // mul();
-
-    // SimpleTensor st1({2, 3}, {1, 2, 3, 4, 5, 6});
-    // SimpleTensor st2({3, 2}, {1, 2, 3, 4, 5, 6});
-    // // SimpleTensor st3 = st1 * st2;
-    // SimpleTensor st3 = mul1();
-
-    // std::cout << st3;
-
-    // SimpleTensor st4 = st2.slice(0, 2);
-    // SimpleTensor st5 = st4 * st3;
-
-    // std::cout << st5 << "\n";
-
     Graph* graph = new Graph();
-    Tensor x1( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
+    SimpleTensor x1_s = SimpleTensor::rand({2,2}, {0, 1});
+    // Node* node = new Node(x1_s);
 
-    Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);
-    Tensor b1({2, 1}, {3, 3}, true, graph, false);
-    Tensor w2({1, 2}, {1, 2}, true, graph, false);
-    Tensor b2({1, 1}, {1}, true, graph, false);
-    SimpleTensor real({1, 1}, {0.5});
+    // std::cout << "Adding gradient\n";
+    // node -> setWholeGradValue( SimpleTensor({2, 2}, 1.0) );
+    Tensor x1(x1_s, true, graph);
 
-    SimpleTensor loss;
-    Tensor predict;
+    Tensor x2({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph);
+    Tensor x3 = TensorOperations::mul(x1, x2);
+    graph -> saveGraphToFile("graph.dot");
+    graph -> backwards();
 
-    // firat sample
-    predict = TensorOperations::mul(w1, x1);
-    predict = TensorOperations::add(predict, b1);
-    predict = TensorOperations::mul(w2, predict);
-    predict = TensorOperations::add(predict, b2);
-    loss = TensorOperations::mseLoss(predict, real);
-    graph->backwards();
-
-    graph->clearSequence();
-    // second samples
-    Tensor x2( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
-    predict = TensorOperations::mul(w1, x2);
-    predict = TensorOperations::add(predict, b1);
-    predict = TensorOperations::mul(w2, predict);
-    predict = TensorOperations::add(predict, b2);
-    loss = TensorOperations::mseLoss(predict, real);
-    graph->backwards();
-
-
-    graph->saveGraphToFile("graph.dot");
-
+    // delete node;
+    delete graph;
     std::cout << "return 0\n";
     return 0;
 }
@@ -80,6 +39,41 @@ int main() {
 
 // 50 samples dataset , 50 epochs (2, 16, relu) (16, 3, relu) (3, 1, relu) -> 12.5s 13s 13.5s
 
+
+// void graph_tensor_test() {
+//         Graph* graph = new Graph();
+//     Tensor x1( *SimpleTensor::rand({2, 1}, {0, 1}), true, graph );
+
+//     Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);
+//     Tensor b1({2, 1}, {3, 3}, true, graph, false);
+//     Tensor w2({1, 2}, {1, 2}, true, graph, false);
+//     Tensor b2({1, 1}, {1}, true, graph, false);
+//     SimpleTensor real({1, 1}, {0.5});
+
+//     SimpleTensor loss;
+//     Tensor predict;
+
+//     // firat sample
+//     predict = TensorOperations::mul(w1, x1);
+//     predict = TensorOperations::add(predict, b1);
+//     predict = TensorOperations::mul(w2, x1);
+//     predict = TensorOperations::add(predict, b2);
+//     loss = TensorOperations::mseLoss(predict, real);
+
+//     graph->saveGraphToFile("graph.dot");
+//     graph->backwards();
+
+//     graph->clearSequence();
+//     // second samples
+//     Tensor x2( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
+//     predict = TensorOperations::mul(w1, x2);
+//     predict = TensorOperations::add(predict, b1);
+//     predict = TensorOperations::mul(w2, predict);
+//     predict = TensorOperations::add(predict, b2);
+//     loss = TensorOperations::mseLoss(predict, real);
+//     graph->backwards();
+
+// }
 
 
 // void time_test_model() {

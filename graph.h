@@ -22,32 +22,34 @@ class Graph {
 
         ~Graph();
 
+        void addNode(Node* node_ptr);
+
+        Node* getNode(std::string tensor_name);
+
         void backwards();
 
-        Node* operator[] (std::string tensor_name);
+        // Node* operator[] (std::string tensor_name);
 
         void orderNodesRec( std::map<Node*, bool>& visited, Node* node);
 
-        void clearSequence();
+        // void printGraph();
+
+        // void clearSequence();
 
         bool orderNodes();
-
-        bool addNode(Node* node_ptr);
-
-        Node* getNode(std::string tensor_name);
 
         bool contains(std::string tensor_name) const {
             return _nodes_map.count(tensor_name);
         }
 
-        const std::vector<Node*> get_nodes() const { return _nodes; };
+        // const std::vector<Node*> get_nodes() const { return _nodes; };
 
         void saveGraphToFile(std::string file_path);
 };
 
 
 
-std::ostream& operator<< (std::ostream& os, const Graph graph);
+// std::ostream& operator<< (std::ostream& os, const Graph graph);
 
 
 #endif //__GRAPH__
