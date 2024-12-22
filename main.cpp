@@ -18,19 +18,39 @@
 
 int main() {
     Graph* graph = new Graph();
-    SimpleTensor x1_s = SimpleTensor::rand({2,2}, {0, 1});
-    // Node* node = new Node(x1_s);
+    Tensor x1( SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
 
-    // std::cout << "Adding gradient\n";
-    // node -> setWholeGradValue( SimpleTensor({2, 2}, 1.0) );
-    Tensor x1(x1_s, true, graph);
+    Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);
+    Tensor b1({2, 1}, {3, 3}, true, graph, false);
+    Tensor w2({1, 2}, {1, 2}, true, graph, false);
+    Tensor b2({1, 1}, {1}, true, graph, false);
+    SimpleTensor real({1, 1}, {0.5});
 
-    Tensor x2({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph);
-    Tensor x3 = TensorOperations::mul(x1, x2);
-    graph -> saveGraphToFile("graph.dot");
-    graph -> backwards();
+    SimpleTensor loss;
+    Tensor predict;
 
-    // delete node;
+    // firat sample
+    predict = TensorOperations::mul(w1, x1);
+    predict = TensorOperations::add(predict, b1);
+    predict = TensorOperations::mul(w2, predict);
+    predict = TensorOperations::add(predict, b2);
+    loss = TensorOperations::mseLoss(predict, real);
+
+    // for( std::pair<std::string, SimpleTensor> pair : graph->getNode(w1)->getLocalGradValues())
+    //     std::cout << pair.first << " " << str_representation(pair.second.getSize()) << "\n";
+
+    graph->saveGraphToFile("graph.dot");
+    graph->backwards();
+
+    // graph->clearSequence();
+    // second samples
+    // Tensor x2( SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
+    // predict = TensorOperations::mul(w1, x2);
+    // predict = TensorOperations::add(predict, b1);
+    // predict = TensorOperations::mul(w2, predict);
+    // predict = TensorOperations::add(predict, b2);
+    // loss = TensorOperations::mseLoss(predict, real);
+    // graph->backwards();
     delete graph;
     std::cout << "return 0\n";
     return 0;
@@ -41,7 +61,7 @@ int main() {
 
 
 // void graph_tensor_test() {
-//         Graph* graph = new Graph();
+//     Graph* graph = new Graph();
 //     Tensor x1( *SimpleTensor::rand({2, 1}, {0, 1}), true, graph );
 
 //     Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);

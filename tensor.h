@@ -16,6 +16,8 @@ class Tensor : public SimpleTensor {
     friend class TensorOperations;
 
     public:
+        Tensor(): SimpleTensor() { }
+
         // Tensor(std::vector<size_t> size, float init, bool calcGrad = false, Graph* graphContext = nullptr);
 
         Tensor(const SimpleTensor& SimpleTensor, bool calcGrad = false, Graph* graphContext = nullptr);
@@ -35,6 +37,8 @@ class Tensor : public SimpleTensor {
 
         // void setGrapContext(Graph* graph_ptr);
 
+        Tensor& operator=(const Tensor&);
+        
         // Tensor& operator=(Tensor&& to_move);
 
         Graph* getGraphContext() { return _grad_graph; }
@@ -53,17 +57,17 @@ using loss_fun = Tensor(*) (Tensor& t1, SimpleTensor& t2);
 
 class TensorOperations {
     public:
-        // static Tensor add(Tensor& t1, Tensor& t2);
+        static Tensor add(Tensor& t1, Tensor& t2);
         static Tensor mul(Tensor& t1, Tensor& t2);
 
         // static Tensor relu(Tensor& t1);
 
-        // static Tensor mseLoss(Tensor& predicted, SimpleTensor& real);
+        static Tensor mseLoss(Tensor& predicted, SimpleTensor& real);
         // static Tensor cceLoss(Tensor& predicted, SimpleTensor& real);
 
         // static std::map<std::string, SimpleTensor> reluDerivatives(SimpleTensor& t1, SimpleTensor& t2);
         static std::map<std::string, SimpleTensor> mulDerivatives(SimpleTensor& t1, SimpleTensor& t2, SimpleTensor& t3);
-        // static std::map<std::string, SimpleTensor> mseLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3);
+        static std::map<std::string, SimpleTensor> mseLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3);
         // static std::map<std::string, SimpleTensor> cceLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3);
 
         // static act_fun activation(std::string activation) { return _activation_map[activation]; }

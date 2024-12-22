@@ -51,7 +51,8 @@ SimpleTensor::SimpleTensor(const SimpleTensor& to_copy) {
 
     _strong_ref_count = to_copy._strong_ref_count;
     _weak_ref_count = to_copy._weak_ref_count;
-    (*_strong_ref_count)++;
+    if(_strong_ref_count)
+        (*_strong_ref_count)++;
     // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
 }
 
@@ -96,7 +97,7 @@ void SimpleTensor::__clean_up__() {
         // std::cout << " w_ref: " << *_weak_ref_count;
         (*_weak_ref_count)--;
     }
-    std::cout << "end of cleaning\n";
+    // std::cout << "end of cleaning\n";
 }
 
 
@@ -200,16 +201,16 @@ SimpleTensor& SimpleTensor::operator=(const SimpleTensor& to_copy) {
         (*_strong_ref_count)++;
 
     return (*this);
-    std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
+    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
 }
 
 
-// SimpleTensor SimpleTensor::identity(size_t size) {
-//     SimpleTensor tens = SimpleTensor({size, size}, 0.0);
-//     for(int i = 0; i < size; i++)
-//         tens._data[i + i * size] = 1;
-//     return tens;
-// }
+SimpleTensor SimpleTensor::identity(size_t size) {
+    SimpleTensor tens = SimpleTensor({size, size}, 0.0);
+    for(int i = 0; i < size; i++)
+        tens._data[i + i * size] = 1;
+    return tens;
+}
 
 void SimpleTensor::evaluateCummulatives() {
     _cummulative_size = std::vector<size_t>(_size.size());
@@ -351,19 +352,19 @@ SimpleTensor SimpleTensor::operator+=(const SimpleTensor& t1) {
 }
 
 
-// SimpleTensor operator+(SimpleTensor& t1, SimpleTensor& t2) {
-//     if( t1._size != t2._size )
-//         std::cout << "(+) dimensions do not match: " << str_representation(t1._size) << " vs " << str_representation(t2._size) << "?!\n";
+SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2) {
+    if( t1._size != t2._size )
+        std::cout << "(+) dimensions do not match: " << str_representation(t1._size) << " vs " << str_representation(t2._size) << "?!\n";
 
-//     // data of result tensor
-//     float* t3_data = new float[t1._all_elements];
+    // data of result tensor
+    float* t3_data = new float[t1._all_elements];
 
-//     // adding tensors
-//     for(int i = 0; i < t1._all_elements; i++)
-//         t3_data[i] = t1._data[i] + t2._data[i];
+    // adding tensors
+    for(int i = 0; i < t1._all_elements; i++)
+        t3_data[i] = t1._data[i] + t2._data[i];
 
-//     return SimpleTensor(t1._size, t3_data, false);
-// }
+    return SimpleTensor(t1._size, t3_data, false);
+}
 
 
 // SimpleTensor operator*(float sc, SimpleTensor& t1) {

@@ -8,7 +8,7 @@ class SimpleTensor {
     friend class TensorOperations;
     friend SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2);
     // friend SimpleTensor operator*(float sc, SimpleTensor& t1);
-    // friend SimpleTensor operator+(SimpleTensor& t1, SimpleTensor& t2);
+    friend SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2);
     friend class Model;
     
     public:
@@ -36,7 +36,7 @@ class SimpleTensor {
         // SimpleTensor& operator=(SimpleTensor && to_move);
 
 
-        // static SimpleTensor identity(size_t size);
+        static SimpleTensor identity(size_t size);
 
         // SimpleTensor operator[] (size_t idx);
 

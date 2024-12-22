@@ -3,7 +3,7 @@
 
 #include "layer.h"
 #include "utils.h"
-#include "graph_tensor.h"
+#include "graph.h"
 
 #include <map>
 #include <string>

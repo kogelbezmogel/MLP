@@ -61,6 +61,16 @@ Tensor::Tensor(std::vector<size_t> size, std::vector<float> data, bool calc_grad
 //     return *this;
 // }
 
+Tensor& Tensor::operator=(const Tensor& to_copy) {
+    SimpleTensor::operator=(to_copy);
+    std::cout << "to_copy\n";
+    _calc_grad = to_copy._calc_grad;
+    _grad_graph = to_copy._grad_graph;
+
+    return (*this);
+}
+        
+
 // Tensor::Tensor(bool calc_grad, Graph* graph_context) :
 //     SimpleTensor(),
 //     _calc_grad(calc_grad),
@@ -104,45 +114,45 @@ Tensor::Tensor(std::vector<size_t> size, std::vector<float> data, bool calc_grad
 
 
 
-// Tensor TensorOperations::add(Tensor& t1, Tensor& t2) {
-//     if( t1._size != t2._size )
-//         std::cout << "(+) tensors size problem?!";
+Tensor TensorOperations::add(Tensor& t1, Tensor& t2) {
+    if( t1._size != t2._size )
+        std::cout << "(+) tensors size problem?!";
 
-//     SimpleTensor* t3_simple = new SimpleTensor(t1 + t2);
+    SimpleTensor t3_simple(t1 + t2);
 
-//     // adding node with local gradient to graph
-//     // For now lets assume only one of the tensors has graph attached
-//     // and its always left one. First attechment of graph need to be outside the Tensor
-//     bool t3_calc_grad = false;
-//     Graph* t3_graph_context = nullptr;
-//     if( t1._calc_grad || t2._calc_grad ) {
+    // adding node with local gradient to graph
+    // For now lets assume only one of the tensors has graph attached
+    // and its always left one. First attechment of graph need to be outside the Tensor
+    bool t3_calc_grad = false;
+    Graph* t3_graph_context = nullptr;
+    if( t1._calc_grad || t2._calc_grad ) {
 
-//         if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
-//             std::cout << "(+) no graph attached?!";
+        if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
+            std::cout << "(+) no graph attached?!";
 
-//         if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
-//             t2._grad_graph = t1._grad_graph;
+        if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
+            t2._grad_graph = t1._grad_graph;
 
-//         t3_calc_grad = true;
-//         t3_graph_context = t1._grad_graph;
-//     }
+        t3_calc_grad = true;
+        t3_graph_context = t1._grad_graph;
+    }
 
-//     if(t3_calc_grad) {
-//         Node* t3_node = new Node(*t3_simple);
+    if(t3_calc_grad) {
+        Node* t3_node = new Node(t3_simple);
 
-//         t3_node -> setOperation("add");
-//         t3_graph_context -> addNode( t3_node );
-//         t3_graph_context->getNode(t1) -> addChild(t3_node);
-//         t3_graph_context->getNode(t2) -> addChild(t3_node);
-//         t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t1));
-//         t3_graph_context->getNode(*t3_simple) -> addParent(t3_graph_context->getNode(t2));
+        t3_node -> setOperation("add");
+        t3_graph_context -> addNode( t3_node );
+        t3_graph_context->getNode(t1) -> addChild(t3_node);
+        t3_graph_context->getNode(t2) -> addChild(t3_node);
+        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
+        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t2));
 
-//         // adding derivatives
-//         t3_graph_context->getNode(t1) -> addLocalGradValue(*t3_simple, SimpleTensor::identity( t1.getSize()[0] ));
-//         t3_graph_context->getNode(t2) -> addLocalGradValue(*t3_simple, SimpleTensor::identity( t2.getSize()[0] ));
-//     }
-//     return Tensor(t3_simple->_size, t3_simple->_data, t3_calc_grad, t1._grad_graph);
-// }
+        // adding derivatives
+        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t1.getSize()[0] ));
+        t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t2.getSize()[0] ));
+    }
+    return Tensor(t3_simple, t3_calc_grad, t1._grad_graph);
+}
 
 
 Tensor TensorOperations::mul(Tensor& t1, Tensor& t2) {
@@ -177,6 +187,8 @@ Tensor TensorOperations::mul(Tensor& t1, Tensor& t2) {
 
         t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, derivatives[t1]);
         t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, derivatives[t2]);
+
+        // std::cout << "Adding " << str_representation() << 
     }
     // std::cout << "done all\n";
 
@@ -294,55 +306,55 @@ std::map<std::string, SimpleTensor> TensorOperations::mulDerivatives(SimpleTenso
 // }
 
 
-// Tensor TensorOperations::mseLoss(Tensor& predicted, SimpleTensor& real) {
-//     std::vector<size_t> p_size = predicted._size;
-//     std::vector<size_t> r_size = real._size;
+Tensor TensorOperations::mseLoss(Tensor& predicted, SimpleTensor& real) {
+    std::vector<size_t> p_size = predicted._size;
+    std::vector<size_t> r_size = real._size;
 
-//     std::cout << "Predicted: " << (std::string) predicted << "\n";
-//     std::cout << "Real:      " << (std::string) real << "\n";
+    std::cout << "Predicted: " << (std::string) predicted << "\n";
+    std::cout << "Real:      " << (std::string) real << "\n";
 
-//     // the restriction for now is that CCE can be evaluated only on vector 
-//     if(p_size[0] != 1 || p_size[1] != 1)
-//         std::cout << "(mse) argument can only be a scalar?!\n";
+    // the restriction for now is that CCE can be evaluated only on vector 
+    if(p_size[0] != 1 || p_size[1] != 1)
+        std::cout << "(mse) argument can only be a scalar?!\n";
     
-//     if( p_size != r_size )
-//         std::cout << "(mse) arguments difrent sizes" << str_representation(p_size) << " vs " << str_representation(r_size) << " ?!\n";
+    if( p_size != r_size )
+        std::cout << "(mse) arguments difrent sizes" << str_representation(p_size) << " vs " << str_representation(r_size) << " ?!\n";
 
-//     float* t3_data = new float[1]{ 0 };
-//     std::vector<size_t> t3_size{1, 1};
-//     t3_data[0] = std::pow(predicted._data[0] - real._data[0], 2);
+    float* t3_data = new float[1]{ 0 };
+    std::vector<size_t> t3_size{1, 1};
+    t3_data[0] = std::pow(predicted._data[0] - real._data[0], 2);
 
-//     // graph 
-//     bool t3_calc_grad = false;
-//     Graph* t3_graph_context = nullptr;
-//     if( predicted._calc_grad ) {
+    // graph 
+    bool t3_calc_grad = false;
+    Graph* t3_graph_context = nullptr;
+    if( predicted._calc_grad ) {
 
-//         if( predicted._grad_graph == nullptr )
-//             std::cout << "(+) no graph attached?!";
+        if( predicted._grad_graph == nullptr )
+            std::cout << "(+) no graph attached?!";
 
-//         t3_calc_grad = true;
-//         t3_graph_context = predicted._grad_graph;
-//     }
+        t3_calc_grad = true;
+        t3_graph_context = predicted._grad_graph;
+    }
 
-//     SimpleTensor t3_simple(t3_size, t3_data);
+    SimpleTensor t3_simple(t3_size, t3_data);
 
-//     if(t3_calc_grad) {
-//         Node* t3_node = new Node(t3_simple); // !!!!
+    if(t3_calc_grad) {
+        Node* t3_node = new Node(t3_simple); // !!!!
 
-//         t3_node -> setOperation("mse");
-//         t3_graph_context -> addNode( t3_node );
-//         t3_graph_context->getNode(predicted) -> addChild(t3_node);
-//         t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
+        t3_node -> setOperation("mse");
+        t3_graph_context -> addNode( t3_node );
+        t3_graph_context->getNode(predicted) -> addChild(t3_node);
+        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
         
-//         // adding derivatives
-//         std::map<std::string, SimpleTensor> derivatives = mseLossDerivatives(predicted, real, t3_simple);
-//         t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
-//     }
+        // adding derivatives
+        std::map<std::string, SimpleTensor> derivatives = mseLossDerivatives(predicted, real, t3_simple);
+        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
+    }
 
-//     Tensor t(t3_simple, true, predicted._grad_graph);
-//     std::cout << "Result:    " << (std::string) t << "\n";
-//     return t;
-// }
+    Tensor t(t3_simple, true, predicted._grad_graph);
+    std::cout << "Result:    " << (std::string) t << "\n";
+    return t;
+}
 
 // Tensor TensorOperations::cceLoss(Tensor& predicted, SimpleTensor& real) {
 //     std::vector<size_t> p_size = predicted._size;
@@ -395,16 +407,16 @@ std::map<std::string, SimpleTensor> TensorOperations::mulDerivatives(SimpleTenso
 //     return Tensor(t3_simple, true, predicted._grad_graph);
 // }
 
-// std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
-//     std::vector<size_t> t3_size{1, 1};
-//     float* t3_data = new float[1];
+std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
+    std::vector<size_t> t3_size{1, 1};
+    float* t3_data = new float[1];
 
-//     t3_data[0] = 2 * (predicted._data[0] - real._data[0]); // this can be chabges to do w = w + lr*dw  instead of w = w - lr*dw
+    t3_data[0] = 2 * (predicted._data[0] - real._data[0]); // this can be chabges to do w = w + lr*dw  instead of w = w - lr*dw
 
-//     std::map<std::string, SimpleTensor> derivatives;
-//     derivatives.insert({predicted, SimpleTensor(t3_size, t3_data)});
-//     return derivatives;
-// }
+    std::map<std::string, SimpleTensor> derivatives;
+    derivatives.insert({predicted, SimpleTensor(t3_size, t3_data)});
+    return derivatives;
+}
 
 // std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
 //     // std::vector<float> res(vec.size(), 0);

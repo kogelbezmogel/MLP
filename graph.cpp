@@ -64,12 +64,17 @@ void Graph::backwards() {
     // std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue()->getSize() ) << "\n";
     last_node -> setWholeGradValue( SimpleTensor(last_node->getValue().getSize(), 1.0) );
 
+    std::cout << "Last node:" 
+              << str_representation(last_node -> getValue().getSize())
+              << " "
+              << str_representation(last_node -> getWholeGradValue().getSize())
+              << "\n";
+
     SimpleTensor grad_value;
     for(std::vector<Node*>::reverse_iterator ite = _nodes_in_order.rbegin() + 1; ite != _nodes_in_order.rend(); ite++) {
         std::cout << (*ite)->getId() << ":   0";
         grad_value = SimpleTensor();
-        for(Node* child : (*ite) -> getChildren() ) {
-            (*ite)->getLocalGradValues()[child->getId()] * child->getWholeGradValue();
+        for(Node* child : (*ite) -> getChildren()) {
             (grad_value) += (*ite)->getLocalGradValues()[child->getId()] * child->getWholeGradValue(); //this is ugly
             std::cout << " + mul(" 
                       << str_representation((*ite)->getLocalGradValues()[child->getId()].getSize())
@@ -77,7 +82,7 @@ void Graph::backwards() {
                       << str_representation(child->getWholeGradValue().getSize())
                       << ")";
         }
-        grad_value.trim();
+        // grad_value.trim();
         std::cout << " = " << str_representation( grad_value.getSize() ) << "\n";
         (*ite) -> setWholeGradValue(grad_value);
     }
