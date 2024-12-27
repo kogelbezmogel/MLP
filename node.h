@@ -29,7 +29,7 @@ class Node {
 
         const std::vector<Node*> getParents() const { return _parents; };
 
-        SimpleTensor getWholeGradValue() { return _whole_gradient_value; };
+        SimpleTensor& getWholeGradValue() { return _whole_gradient_value; };
 
         std::map<std::string, SimpleTensor> getLocalGradValues() { return _local_gradient_values; };
 
@@ -69,6 +69,8 @@ class Node {
         static int node_num;
         std::string _node_id;
         bool _is_input;
+
+        Node( const Node& node) { }
 };
 
 

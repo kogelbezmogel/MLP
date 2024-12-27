@@ -95,7 +95,7 @@ void SimpleTensor::__clean_up__() {
         }
     } else if (_slice == true ) {
         // std::cout << " w_ref: " << *_weak_ref_count;
-        (*_weak_ref_count)--;
+        // (*_weak_ref_count)--;
     }
     // std::cout << "end of cleaning\n";
 }
@@ -248,38 +248,38 @@ void SimpleTensor::trim() {
 }
 
 
-// SimpleTensor SimpleTensor::operator[] (size_t idx) {
-//     SimpleTensor t1;
-//     float *slice_start{nullptr};
-//     std::vector<size_t> size{0};
+SimpleTensor SimpleTensor::operator[] (size_t idx) {
+    SimpleTensor t1;
+    float *slice_start{nullptr};
+    std::vector<size_t> size{0};
 
-//     if(idx < _size[0]) {
-//         size = _size;
-//         size.erase(size.begin());
+    if(idx < _size[0]) {
+        size = _size;
+        size.erase(size.begin());
 
-//         int elements_per_slice{1};
-//         for(int i = 0; i < size.size(); i++)
-//             elements_per_slice *= size[i];
-//         slice_start = _data + idx * elements_per_slice;
+        int elements_per_slice{1};
+        for(int i = 0; i < size.size(); i++)
+            elements_per_slice *= size[i];
+        slice_start = _data + idx * elements_per_slice;
 
-//         // some kind of constructor would be better
-//         delete t1._weak_ref_count;
-//         delete t1._strong_ref_count;
-//         t1._size = size;
-//         t1._data = slice_start;
-//         t1._id = _id + "_s";
-//         t1._empty = false;
-//         t1._slice = true;
-//         t1._all_elements = elements_per_slice;
-//         t1._strong_ref_count = _strong_ref_count;
-//         t1._weak_ref_count = _weak_ref_count;
-//         (*_weak_ref_count)++;
-//         t1.evaluateCummulatives();
-//     } else {
-//         std::cout << "";
-//     }
-//     return t1;
-// }
+        // some kind of constructor would be better
+        // delete t1._weak_ref_count;
+        // delete t1._strong_ref_count;
+        t1._size = size;
+        t1._data = slice_start;
+        t1._id = _id + "_s";
+        t1._empty = false;
+        t1._slice = true;
+        t1._all_elements = elements_per_slice;
+        t1._strong_ref_count = _strong_ref_count;
+        t1._weak_ref_count = _weak_ref_count;
+        (*_weak_ref_count)++;
+        t1.evaluateCummulatives();
+    } else {
+        std::cout << "Index " << idx << " out of range?!\n";
+    }
+    return t1;
+}
 
 
 // const SimpleTensor SimpleTensor::operator[] (size_t idx) const {
@@ -367,18 +367,18 @@ SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2) {
 }
 
 
-// SimpleTensor operator*(float sc, SimpleTensor& t1) {
-//     // std::cout << "scalar * tensor\n";
+SimpleTensor operator*(float sc, SimpleTensor& t1) {
+    // std::cout << "scalar * tensor\n";
 
-//     // data of result tensor
-//     float* t3_data = new float[t1._all_elements];
+    // data of result tensor
+    float* t3_data = new float[t1._all_elements];
 
-//     // adding tensors
-//     for(int i = 0; i < t1._all_elements; i++)
-//         t3_data[i] = sc * t1._data[i] ;
+    // adding tensors
+    for(int i = 0; i < t1._all_elements; i++)
+        t3_data[i] = sc * t1._data[i] ;
 
-//     return SimpleTensor(t1._size, t3_data, false);
-// }
+    return SimpleTensor(t1._size, t3_data, false);
+}
 
 
 SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2) {

@@ -26,7 +26,9 @@ Graph::~Graph() {
 void Graph::addNode(Node* node_ptr) {
     _nodes.push_back(node_ptr);
     // std::cout << "addNode " << node_ptr->getId() << ": " << node_ptr << "\n";
-    _nodes_map.insert( { node_ptr->getId(), node_ptr} );
+    // std::cout << "adding " << node_ptr->getId() << " for " << _nodes_map.count(node_ptr->getId()) << " time this nodes\n";
+    if( _nodes_map.count(node_ptr->getId()) == 0 )
+        _nodes_map.insert( { node_ptr->getId(), node_ptr} );
     // std::cout << "adding node: " << node_ptr->getId() << " " << str_representation(node_ptr->getValue().getSize()) << "\n";
 }
 
@@ -55,35 +57,38 @@ Node* Graph::getNode (std::string tensor_name) {
 
 
 void Graph::backwards() {
+    // std::cout << "error1\n";
     //sorting nodes
     orderNodes();
+
+    // std::cout << "error2\n";
 
     // setting local_grad and grad of last node to 1
     Node* last_node = _nodes_in_order[ _nodes_in_order.size()-1 ];
 
-    // std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue()->getSize() ) << "\n";
+    // std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue().getSize() ) << "\n";
     last_node -> setWholeGradValue( SimpleTensor(last_node->getValue().getSize(), 1.0) );
 
-    std::cout << "Last node:" 
-              << str_representation(last_node -> getValue().getSize())
-              << " "
-              << str_representation(last_node -> getWholeGradValue().getSize())
-              << "\n";
+    // std::cout << "Last node:" 
+    //           << str_representation(last_node -> getValue().getSize())
+    //           << " "
+    //           << str_representation(last_node -> getWholeGradValue().getSize())
+    //           << "\n";
 
     SimpleTensor grad_value;
     for(std::vector<Node*>::reverse_iterator ite = _nodes_in_order.rbegin() + 1; ite != _nodes_in_order.rend(); ite++) {
-        std::cout << (*ite)->getId() << ":   0";
+        // std::cout << (*ite)->getId() << ":   0";
         grad_value = SimpleTensor();
         for(Node* child : (*ite) -> getChildren()) {
             (grad_value) += (*ite)->getLocalGradValues()[child->getId()] * child->getWholeGradValue(); //this is ugly
-            std::cout << " + mul(" 
-                      << str_representation((*ite)->getLocalGradValues()[child->getId()].getSize())
-                      << " * "
-                      << str_representation(child->getWholeGradValue().getSize())
-                      << ")";
+            // std::cout << " + mul(" 
+            //           << str_representation((*ite)->getLocalGradValues()[child->getId()].getSize())
+            //           << " * "
+            //           << str_representation(child->getWholeGradValue().getSize())
+            //           << ")";
         }
-        // grad_value.trim();
-        std::cout << " = " << str_representation( grad_value.getSize() ) << "\n";
+        grad_value.trim();
+        // std::cout << " = " << str_representation( grad_value.getSize() ) << "\n";
         (*ite) -> setWholeGradValue(grad_value);
     }
 }
@@ -108,47 +113,59 @@ void Graph::orderNodesRec( std::map<Node*, bool>& visited, Node* node) {
     }
 }
 
-// void Graph::clearSequence() {
-//     orderNodes();
+void Graph::clearSequence() {
+    orderNodes();
 
-//     // std::cout << "\nbefore clearing\nnodes: ";
-//     // for(Node* node : _nodes)
-//     //     std::cout << node -> getId() << " | ";
-//     // std::cout << "\nnodes_in_order: ";
-//     // for(Node* node : _nodes_in_order)
-//     //     std::cout << node -> getId() << " | ";
-//     // std::cout << "\n clearing: ";
+    // std::cout << "\nbefore clearing\nnodes: ";
+    // for(Node* node : _nodes)
+    //     std::cout << node -> getId() << " | ";
+    // std::cout << "\nnodes_in_order: ";
+    // for(Node* node : _nodes_in_order)
+    //     std::cout << node -> getId() << " | ";
+    // std::cout << "\n clearing: ";
 
-//     _nodes.clear();
+    _nodes.clear();
     
-//     for(std::vector<Node*>::reverse_iterator node_ite = _nodes_in_order.rbegin(); node_ite < _nodes_in_order.rend(); node_ite++)
-//         if( (*node_ite) -> isInput() ) {
-//             // std::cout << "-" << (*node_ite) -> getId() << "\n";
-//             delete (*node_ite);
-//         } else
-//             _nodes.push_back( (*node_ite) );
-//     _nodes_in_order.clear();
+    for(std::vector<Node*>::reverse_iterator node_ite = _nodes_in_order.rbegin(); node_ite < _nodes_in_order.rend(); node_ite++)
+        if( (*node_ite) -> isInput() ) {
+            // std::cout << "deleteing node " << (*node_ite) -> getId() << "\n";
+            delete (*node_ite);
+            (*node_ite) = nullptr;
+        } else
+            _nodes.push_back( (*node_ite) );
+    _nodes_in_order.clear();
     
-//     for(Node* node : _nodes)
-//         node -> setChildren({});
+    for(Node* node : _nodes) {
+        node -> setChildren({});
+        node -> setParents({});
+    }
 
-//     // std::cout << "\n\nafter clearing\nnodes: ";
-//     // for(Node* node : _nodes)
-//     //     std::cout << node -> getId() << " | ";
-//     // std::cout << "\nnodes_in_order: ";
-//     // for(Node* node : _nodes_in_order)
-//     //     std::cout << node -> getId() << " | ";
-//     // std::cout << "\n\n";
-// }
+    _nodes_map.clear();
+    for(Node* node : _nodes)
+        _nodes_map.insert({node->getId(), node});
+
+    // std::cout << "\n\nafter clearing\nnodes: ";
+    // for(Node* node : _nodes)
+    //     std::cout << node -> getId() << " | ";
+    // std::cout << "\nnodes_in_order: ";
+    // for(Node* node : _nodes_in_order)
+    //     std::cout << node -> getId() << " | ";
+    // std::cout << "\n\n";
+}
 
 bool Graph::orderNodes() {
+    // std::cout << "hello order\n";
     std::map<Node*, bool> vistited;
     _nodes_in_order.clear();
 
-    for(auto* node : _nodes)
+    // std::cout << "order\n";
+    for(Node* node : _nodes)
         vistited.insert({node, false});
+    
 
-    for(auto* node: _nodes)
+    // std::cout << "before rec\n";
+
+    for(Node* node: _nodes)
             orderNodesRec(vistited, node);
 
     // printing resulkts

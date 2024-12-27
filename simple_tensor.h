@@ -7,7 +7,7 @@ class SimpleTensor {
 
     friend class TensorOperations;
     friend SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2);
-    // friend SimpleTensor operator*(float sc, SimpleTensor& t1);
+    friend SimpleTensor operator*(float sc, SimpleTensor& t1);
     friend SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2);
     friend class Model;
     
@@ -38,13 +38,13 @@ class SimpleTensor {
 
         static SimpleTensor identity(size_t size);
 
-        // SimpleTensor operator[] (size_t idx);
+        SimpleTensor operator[] (size_t idx);
 
         // const SimpleTensor operator[] (size_t idx) const;
 
         SimpleTensor operator+= (const SimpleTensor& t1);
 
-        // SimpleTensor reshape(std::vector<size_t> new_size) { _size = new_size; return (*this); } // needs a check
+        SimpleTensor reshape(std::vector<size_t> new_size) { _size = new_size; return (*this); } // needs a check
 
         void evaluateCummulatives();
 
@@ -55,24 +55,24 @@ class SimpleTensor {
         // makes deep copy 
         // SimpleTensor copy(const SimpleTensor to_copy);
 
-        // SimpleTensor slice(size_t start, size_t end) {  // needs to be more roboust
-        //     SimpleTensor t1;
-        //     std::vector< size_t> r_size(_size);
-        //     r_size[0] = end - start;
+        SimpleTensor slice(size_t start, size_t end) {  // needs to be more roboust
+            SimpleTensor t1;
+            std::vector< size_t> r_size(_size);
+            r_size[0] = end - start;
 
-        //     // some kind of constructor would be better
-        //     t1._size = r_size;
-        //     t1._data = _data + start * _cummulative_size[0];
-        //     t1._id = _id + "_s";
-        //     t1._empty = false;
-        //     t1._slice = true;
-        //     t1._all_elements = r_size[0] * _cummulative_size[0];
-        //     t1._strong_ref_count = _strong_ref_count;
-        //     t1._weak_ref_count = _weak_ref_count;
-        //     (*_weak_ref_count)++;
-        //     t1.evaluateCummulatives();
-        //     return t1;
-        // }
+            // some kind of constructor would be better
+            t1._size = r_size;
+            t1._data = _data + start * _cummulative_size[0];
+            t1._id = _id + "_s";
+            t1._empty = false;
+            t1._slice = true;
+            t1._all_elements = r_size[0] * _cummulative_size[0];
+            t1._strong_ref_count = _strong_ref_count;
+            t1._weak_ref_count = _weak_ref_count;
+            (*_weak_ref_count)++;
+            t1.evaluateCummulatives();
+            return t1;
+        }
 
         operator std::string() const { return _id; };
 

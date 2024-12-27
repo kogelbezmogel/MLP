@@ -16,11 +16,15 @@ class Graph {
         std::vector<Node*> _nodes;
         std::vector<Node*> _nodes_in_order;
         std::map<std::string, Node*> _nodes_map;
+
+        Graph( const Graph& graph) { };
     
     public:
         Graph();
 
         ~Graph();
+
+        std::vector<Node*> getNodes() { return _nodes; }
 
         void addNode(Node* node_ptr);
 
@@ -34,7 +38,7 @@ class Graph {
 
         // void printGraph();
 
-        // void clearSequence();
+        void clearSequence();
 
         bool orderNodes();
 

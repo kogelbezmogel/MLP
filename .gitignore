@@ -6,4 +6,5 @@
 a.exe
 to_do_list.txt
 *.dot
+*.csv
 test.cpp
