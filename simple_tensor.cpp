@@ -11,16 +11,14 @@
 SimpleTensor::SimpleTensor(): _slice{false}, _empty{true}, _all_elements{0} {
     _id = "_empty";
     _size = std::vector<size_t>{0};
-    _weak_ref_count = nullptr;
+    // _weak_ref_count = nullptr;
     _strong_ref_count = nullptr;
 }
 
-
 // SimpleTensor::SimpleTensor(float value): SimpleTensor(std::vector<size_t>{1}, value) { }
 
-
 SimpleTensor::SimpleTensor(std::vector<size_t> size, float init) : _size{size}, _slice{false} {
-    _weak_ref_count = new size_t{0};
+    // _weak_ref_count = new size_t{0};
     _strong_ref_count = new size_t{1};
 
     size_t all_elements = 1;
@@ -39,8 +37,7 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, float init) : _size{size}, 
 
 
 SimpleTensor::SimpleTensor(const SimpleTensor& to_copy) {
-    _strong_ref_count = to_copy._strong_ref_count;
-    _weak_ref_count = to_copy._weak_ref_count;
+    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
     _cummulative_size = to_copy._cummulative_size;
     _size = to_copy._size;
     _empty = to_copy._empty;
@@ -50,15 +47,20 @@ SimpleTensor::SimpleTensor(const SimpleTensor& to_copy) {
     _data = to_copy._data;
 
     _strong_ref_count = to_copy._strong_ref_count;
-    _weak_ref_count = to_copy._weak_ref_count;
-    if(_strong_ref_count)
+    // _weak_ref_count = to_copy._weak_ref_count;
+    if(_strong_ref_count && !_slice)
         (*_strong_ref_count)++;
-    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
+    // else if (_slice)
+        // (*_weak_ref_count)++;
 }
 
 
 SimpleTensor::~SimpleTensor() {
-    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
+    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this);
+    // if(_weak_ref_count)
+    //     std::cout << " w_num: " << *_weak_ref_count << " | ";
+    // if(_strong_ref_count)
+    //     std::cout << "s_num: " << *_strong_ref_count << "\n";
     __clean_up__();
 }
 
@@ -78,23 +80,23 @@ void SimpleTensor::__clean_up__() {
         //nothing to do
     } else if(_slice == false) {
         (*_strong_ref_count)--;
-        // std::cout << " s_ref:" << *_strong_ref_count;
+        // std::cout << " s_ref:" << *_strong_ref_count << "\n";
 
         if(*_strong_ref_count == 0) {
-            if(*_weak_ref_count != 0) {
-                std::cout << *_weak_ref_count << " weak refs stiil around?! ";
-            }
+            // if(*_weak_ref_count != 0) {
+                // std::cout << *_weak_ref_count << " weak refs stiil around?! ";
+            // }
             // std::cout << " memory deallocated ";
             delete _strong_ref_count;
-            delete _weak_ref_count;
+            // delete _weak_ref_count;
             delete [] _data;
 
             _strong_ref_count = nullptr;
-            _weak_ref_count = nullptr;
+            // _weak_ref_count = nullptr;
             _data = nullptr;
         }
     } else if (_slice == true ) {
-        // std::cout << " w_ref: " << *_weak_ref_count;
+        // std::cout << " w_ref: " << *_weak_ref_count << "\n";
         // (*_weak_ref_count)--;
     }
     // std::cout << "end of cleaning\n";
@@ -118,7 +120,7 @@ SimpleTensor SimpleTensor::rand(std::vector<size_t> size, std::pair<float, float
 
 
 SimpleTensor::SimpleTensor(std::vector<size_t> size, std::vector<float> data) : _size{size}, _slice{false} {
-    _weak_ref_count = new size_t{0};
+    // _weak_ref_count = new size_t{0};
     _strong_ref_count = new size_t{1};
 
     size_t all_elements = 1;
@@ -144,7 +146,7 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, std::vector<float> data) : 
 
 
 SimpleTensor::SimpleTensor(std::vector<size_t> size, float* data, bool slice) : _size{size}, _data{data}, _slice{slice} {
-    _weak_ref_count = new size_t{0};
+    // _weak_ref_count = new size_t{0};
     _strong_ref_count = new size_t{1};
 
     size_t all_elements = 1;
@@ -186,7 +188,7 @@ SimpleTensor& SimpleTensor::operator=(const SimpleTensor& to_copy) {
 
     _data = to_copy._data;
     _strong_ref_count = to_copy._strong_ref_count;
-    _weak_ref_count = to_copy._weak_ref_count;
+    // _weak_ref_count = to_copy._weak_ref_count;
     _cummulative_size = to_copy._cummulative_size;
     _size = to_copy._size;
     _empty = to_copy._empty;
@@ -195,10 +197,12 @@ SimpleTensor& SimpleTensor::operator=(const SimpleTensor& to_copy) {
     _id = to_copy._id;
 
     _strong_ref_count = to_copy._strong_ref_count;
-    _weak_ref_count = to_copy._weak_ref_count;
+    // _weak_ref_count = to_copy._weak_ref_count;
 
-    if(!_empty) // if not coping from empty
+    if(_strong_ref_count && !_slice)
         (*_strong_ref_count)++;
+    // else if (_slice)
+        // (*_weak_ref_count)++;
 
     return (*this);
     // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
@@ -272,8 +276,8 @@ SimpleTensor SimpleTensor::operator[] (size_t idx) {
         t1._slice = true;
         t1._all_elements = elements_per_slice;
         t1._strong_ref_count = _strong_ref_count;
-        t1._weak_ref_count = _weak_ref_count;
-        (*_weak_ref_count)++;
+        // t1._weak_ref_count = _weak_ref_count;
+        // (*_weak_ref_count)++;
         t1.evaluateCummulatives();
     } else {
         std::cout << "Index " << idx << " out of range?!\n";
@@ -321,19 +325,23 @@ SimpleTensor SimpleTensor::operator[] (size_t idx) {
 float SimpleTensor::at(std::vector<size_t> point) const {
     // add some size table instead of calculating it every time
     // strats with last value
+    // for(int i = 0; i < _size.size(); i++)
+    //     if(point[i] >= _size[i])
+    //         std::cout << "out of range?! \n";
+
+
     int flat_idx = 0;
     for(int i = 0; i < _size.size(); i++)
-        flat_idx += point[i] * _cummulative_size[ i ];
+        flat_idx += point[i] * _cummulative_size[i];
 
     return *(_data + flat_idx);
 }
 
 
 SimpleTensor SimpleTensor::operator+=(const SimpleTensor& t1) {
-
     if(_empty) {
         // here weak references and etc
-        _weak_ref_count = new size_t{0};
+        // _weak_ref_count = new size_t{0};
         _strong_ref_count = new size_t{1};
         _size = t1._size;
         _all_elements = t1._all_elements;
@@ -349,6 +357,7 @@ SimpleTensor SimpleTensor::operator+=(const SimpleTensor& t1) {
         _data[i] += t1._data[i];
 
     return (*this);
+    // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << "\n";
 }
 
 

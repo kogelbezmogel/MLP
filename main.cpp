@@ -24,7 +24,7 @@ int main() {
         new Layer(3, 1, true, "relu")
     });
 
-    Optimizer optim(model, 0.001);
+    Optimizer optim(model, 0.0001);
 
     size_t batch_size = 10;
     SimpleTensor sample;
@@ -37,28 +37,29 @@ int main() {
 
     int num = 0;
     float avg_loss = 0;
-    for(int epoch = 0; epoch < 1; epoch++) {
+    for(int epoch = 0; epoch < 50; epoch++) {
         for(Batch batch : dataloader) {
             num = 0;
             avg_loss = 0;
             for(int i = 0; i < batch.x.getSize()[0]; i++) {
                 y_real = batch.y[i].reshape({1, 1});
                 sample = batch.x[i].reshape({2, 1});
-                // y_pred = model(sample);
 
-                // loss = TensorOperations::mseLoss(y_pred, y_real);
-                // avg_loss += loss.at({0, 0});
-                // loss.getGraphContext() -> backwards();
-                // optim.step();
-                // loss.getGraphContext() -> clearSequence();
+                y_pred = model(sample);
+                loss = TensorOperations::mseLoss(y_pred, y_real);
 
-                // std::cout << num << ". loss: " << std::sqrt(loss.at({0, 0})) << "\n";
+                avg_loss += loss.at({0, 0});
+                loss.getGraphContext() -> backwards();
+                optim.step();
+                loss.getGraphContext() -> clearSequence();
+
                 num++;
-                break;
+                // break;
             }
+            // break;
         }
         std::cout << "avg_loss: " << avg_loss / num << "\n";
-
+        // break;
     }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);

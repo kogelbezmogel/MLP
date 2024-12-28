@@ -13,13 +13,17 @@
 
 class Graph {
     private:
-        std::vector<Node*> _nodes;
-        std::vector<Node*> _nodes_in_order;
-        std::map<std::string, Node*> _nodes_map;
+        // std::vector<Node*> _nodes;
+        // std::vector<Node*> _nodes_in_order;
+        // std::map<std::string, Node*> _nodes_map;
 
         Graph( const Graph& graph) { };
     
     public:
+        std::vector<Node*> _nodes;
+        std::vector<Node*> _nodes_in_order;
+        std::map<std::string, Node*> _nodes_map;
+
         Graph();
 
         ~Graph();

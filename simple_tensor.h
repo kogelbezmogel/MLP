@@ -12,6 +12,18 @@ class SimpleTensor {
     friend class Model;
     
     public:
+        std::vector<size_t> _cummulative_size;
+        std::vector<size_t> _size;
+        bool _empty{false};
+        std::string _id;
+        size_t _all_elements {0};
+        float* _data {nullptr};
+        bool _slice;   
+        // shared_pointer mechanism
+        size_t* _strong_ref_count;
+
+
+
         SimpleTensor(std::vector<size_t> size, float init);
 
         SimpleTensor(const SimpleTensor& to_copy);  
@@ -44,7 +56,11 @@ class SimpleTensor {
 
         SimpleTensor operator+= (const SimpleTensor& t1);
 
-        SimpleTensor reshape(std::vector<size_t> new_size) { _size = new_size; return (*this); } // needs a check
+        SimpleTensor& reshape(std::vector<size_t> new_size) {
+            _size = new_size;
+            evaluateCummulatives();
+            return (*this);
+        } // needs a check
 
         void evaluateCummulatives();
 
@@ -59,6 +75,7 @@ class SimpleTensor {
             SimpleTensor t1;
             std::vector< size_t> r_size(_size);
             r_size[0] = end - start;
+            // std::cout << __PRETTY_FUNCTION__ << " " << (std::string) (*this) << " w_num: " << _weak_ref_count << "\n";
 
             // some kind of constructor would be better
             t1._size = r_size;
@@ -68,8 +85,8 @@ class SimpleTensor {
             t1._slice = true;
             t1._all_elements = r_size[0] * _cummulative_size[0];
             t1._strong_ref_count = _strong_ref_count;
-            t1._weak_ref_count = _weak_ref_count;
-            (*_weak_ref_count)++;
+            // t1._weak_ref_count = _weak_ref_count;
+            // (*_weak_ref_count)++;
             t1.evaluateCummulatives();
             return t1;
         }
@@ -80,7 +97,7 @@ class SimpleTensor {
 
         size_t nElements() const { return _all_elements; }
 
-        size_t getWeakCount() { return *_weak_ref_count; }
+        // size_t getWeakCount() { return *_weak_ref_count; }
 
         size_t getStrongCount() { return *_strong_ref_count; }
 
@@ -89,18 +106,18 @@ class SimpleTensor {
         float at(std::vector<size_t> point) const;
 
     protected:
-        std::vector<size_t> _cummulative_size;
-        std::vector<size_t> _size;
-        bool _empty{false};
+        // std::vector<size_t> _cummulative_size;
+        // std::vector<size_t> _size;
+        // bool _empty{false};
 
-        std::string _id;
-        size_t _all_elements {0};
-        float* _data {nullptr};
-        bool _slice;   
+        // std::string _id;
+        // size_t _all_elements {0};
+        // float* _data {nullptr};
+        // bool _slice;   
 
-        // shared_pointer mechanism
-        size_t* _strong_ref_count;
-        size_t* _weak_ref_count;
+        // // shared_pointer mechanism
+        // size_t* _strong_ref_count;
+        // size_t* _weak_ref_count;
 
         void __clean_up__();
 };

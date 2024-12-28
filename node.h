@@ -58,6 +58,13 @@ class Node {
         
         bool hasChildren() { return _children.size() > 0; }
 
+        void reset() {
+            _children.clear();
+            _parents.clear();
+            _local_gradient_values.clear();
+            _whole_gradient_value = SimpleTensor();
+        }
+
     private:
         SimpleTensor _input;
         std::vector<Node*> _children;

@@ -3,6 +3,8 @@
 #include <vector>
 #include <map>
 #include <fstream>
+#include <chrono>
+
 
 #include "graph.h"
 #include "tensor.h"
@@ -59,6 +61,7 @@ Node* Graph::getNode (std::string tensor_name) {
 void Graph::backwards() {
     // std::cout << "error1\n";
     //sorting nodes
+
     orderNodes();
 
     // std::cout << "error2\n";
@@ -76,11 +79,13 @@ void Graph::backwards() {
     //           << "\n";
 
     SimpleTensor grad_value;
+    int count = 0;
+    
     for(std::vector<Node*>::reverse_iterator ite = _nodes_in_order.rbegin() + 1; ite != _nodes_in_order.rend(); ite++) {
         // std::cout << (*ite)->getId() << ":   0";
         grad_value = SimpleTensor();
         for(Node* child : (*ite) -> getChildren()) {
-            (grad_value) += (*ite)->getLocalGradValues()[child->getId()] * child->getWholeGradValue(); //this is ugly
+            grad_value += (*ite)->getLocalGradValues()[child->getId()] * child->getWholeGradValue(); //this is ugly
             // std::cout << " + mul(" 
             //           << str_representation((*ite)->getLocalGradValues()[child->getId()].getSize())
             //           << " * "
@@ -90,7 +95,10 @@ void Graph::backwards() {
         grad_value.trim();
         // std::cout << " = " << str_representation( grad_value.getSize() ) << "\n";
         (*ite) -> setWholeGradValue(grad_value);
+        count++;
     }
+
+        
 }
 
 // Node* Graph::operator[] (std::string tensor_name) {
@@ -135,10 +143,8 @@ void Graph::clearSequence() {
             _nodes.push_back( (*node_ite) );
     _nodes_in_order.clear();
     
-    for(Node* node : _nodes) {
-        node -> setChildren({});
-        node -> setParents({});
-    }
+    for(Node* node : _nodes)
+        node -> reset();
 
     _nodes_map.clear();
     for(Node* node : _nodes)
