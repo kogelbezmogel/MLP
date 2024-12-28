@@ -54,13 +54,13 @@ class Layer {
             }
         }
 
-        void update(SimpleTensor delta_weight);
+        // void update(SimpleTensor delta_weight);
         
         std::string getName() { return _layer_name; }
 
-        Tensor getWeight() { return _weight; }
+        Tensor& getWeight() { return _weight; }
 
-        Tensor getBias() { return _bias; }
+        Tensor& getBias() { return _bias; }
 
         bool bias() const { return _has_bias; }
 

@@ -3,7 +3,7 @@
 
 #include "layer.h"
 #include "utils.h"
-#include "graph_tensor.h"
+#include "graph.h"
 
 #include <map>
 #include <string>
@@ -21,7 +21,18 @@ class Model {
             }
             _layer_sequence = layers;
         }
-             
+
+        ~Model() {
+            for(Layer* layer : _layer_sequence) {
+                delete layer;
+                layer = nullptr;
+            }
+
+            delete _graph_context;
+            _graph_context = nullptr;
+        }
+
+
         Tensor operator() (SimpleTensor input) {
             Tensor x;
             if(_graph_context != nullptr) {

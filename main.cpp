@@ -2,62 +2,154 @@
 #include <vector>
 #include <chrono>
 
+// #include "tensor.h"
 #include "optimizer.h"
 #include "model.h"
 #include "utils.h"
 #include "dataloader.h"
+// #include "simple_tensor.h"
+
+// void mul(Graph* graph) {
+//     SimpleTensor x1_s = SimpleTensor::rand({3, 1}, {0, 1});
+//     Tensor x1(x1_s, true, graph);
+// }
+
 
 
 int main() {
-    // time_test_model();
-}
-
-
-// 50 samples dataset (2, 16, relu) (16, 3, relu) (3, 1, relu) -> 12.5s 13s 13.5s
-
-
-
-void time_test_model() {
+    
     Model model({
         new Layer(2, 16, true, "relu"),
         new Layer(16, 3, true, "relu"),
-        new Layer(3, 1, false, ""),
+        new Layer(3, 1, true, "relu")
     });
 
-    Optimizer optim(model, 0.001);
+    Optimizer optim(model, 0.0001);
 
     size_t batch_size = 10;
     SimpleTensor sample;
     SimpleTensor y_real;
-    Tensor y_pred, loss_value;
+    Tensor y_pred, loss;
+
+    Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
 
     auto start = std::chrono::high_resolution_clock::now();
 
     int num = 0;
+    float avg_loss = 0;
     for(int epoch = 0; epoch < 50; epoch++) {
-        Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
         for(Batch batch : dataloader) {
+            num = 0;
+            avg_loss = 0;
             for(int i = 0; i < batch.x.getSize()[0]; i++) {
                 y_real = batch.y[i].reshape({1, 1});
                 sample = batch.x[i].reshape({2, 1});
 
                 y_pred = model(sample);
+                loss = TensorOperations::mseLoss(y_pred, y_real);
 
-                loss_value = TensorOperations::mseLoss(y_pred, y_real);
-                loss_value.getGraphContext()->backwards();
-
+                avg_loss += loss.at({0, 0});
+                loss.getGraphContext() -> backwards();
                 optim.step();
-                // std::cout << num << " loss: " << std::sqrt(loss_value.at({0, 0})) << "\n";
-                num++;
-            }
-        }
-    }
+                loss.getGraphContext() -> clearSequence();
 
+                num++;
+                // break;
+            }
+            // break;
+        }
+        std::cout << "avg_loss: " << avg_loss / num << "\n";
+        // break;
+    }
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << "time: " << duration.count() << " miliseconds\n";
-    std::cout << "ret0";
+    
+    std::cout << "return 0\n";
+    return 0;
 }
+
+
+// 50 samples dataset , 50 epochs (2, 16, relu) (16, 3, relu) (3, 1, relu) -> 12.5s 13s 13.5s
+
+
+// void graph_tensor_test() {
+//     Graph* graph = new Graph();
+//     Tensor x1( *SimpleTensor::rand({2, 1}, {0, 1}), true, graph );
+
+//     Tensor w1({2, 3}, {1, 2, 3, 4, 5, 6}, true, graph, false);
+//     Tensor b1({2, 1}, {3, 3}, true, graph, false);
+//     Tensor w2({1, 2}, {1, 2}, true, graph, false);
+//     Tensor b2({1, 1}, {1}, true, graph, false);
+//     SimpleTensor real({1, 1}, {0.5});
+
+//     SimpleTensor loss;
+//     Tensor predict;
+
+//     // firat sample
+//     predict = TensorOperations::mul(w1, x1);
+//     predict = TensorOperations::add(predict, b1);
+//     predict = TensorOperations::mul(w2, x1);
+//     predict = TensorOperations::add(predict, b2);
+//     loss = TensorOperations::mseLoss(predict, real);
+
+//     graph->saveGraphToFile("graph.dot");
+//     graph->backwards();
+
+//     graph->clearSequence();
+//     // second samples
+//     Tensor x2( *SimpleTensor::rand({3, 1}, {0, 1}), true, graph );
+//     predict = TensorOperations::mul(w1, x2);
+//     predict = TensorOperations::add(predict, b1);
+//     predict = TensorOperations::mul(w2, predict);
+//     predict = TensorOperations::add(predict, b2);
+//     loss = TensorOperations::mseLoss(predict, real);
+//     graph->backwards();
+
+// }
+
+
+// void time_test_model() {
+//     Model model({
+//         new Layer(2, 16, true, "relu"),
+//         new Layer(16, 3, true, "relu"),
+//         new Layer(3, 1, false, ""),
+//     });
+
+//     Optimizer optim(model, 0.001);
+
+//     size_t batch_size = 10;
+//     SimpleTensor sample;
+//     SimpleTensor y_real;
+//     Tensor y_pred, loss_value;
+
+//     auto start = std::chrono::high_resolution_clock::now();
+
+//     int num = 0;
+//     for(int epoch = 0; epoch < 50; epoch++) {
+//         Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
+//         for(Batch batch : dataloader) {
+//             for(int i = 0; i < batch.x.getSize()[0]; i++) {
+//                 y_real = batch.y[i].reshape({1, 1});
+//                 sample = batch.x[i].reshape({2, 1});
+
+//                 y_pred = model(sample);
+
+//                 loss_value = TensorOperations::mseLoss(y_pred, y_real);
+//                 loss_value.getGraphContext()->backwards();
+
+//                 optim.step();
+//                 // std::cout << num << " loss: " << std::sqrt(loss_value.at({0, 0})) << "\n";
+//                 num++;
+//             }
+//         }
+//     }
+
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+//     std::cout << "time: " << duration.count() << " miliseconds\n";
+//     std::cout << "ret0";
+// }
 
 
 // int dataloader_test() {

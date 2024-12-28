@@ -71,7 +71,7 @@ void Dataloader::generateBatches() {
 Dataloader::Dataloader(std::string file_path, int batch_size, bool shuffle) : _batch_size(batch_size) {
     this -> _file_path = file_path;
 
-    // std::cout << _file_path << " initialised" << std::endl; 
+    std::cout << _file_path << " initialised" << std::endl; 
     loadDataFromCSV();
     generateBatches();
 
