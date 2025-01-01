@@ -9,8 +9,6 @@ Tensor::Tensor(const SimpleTensor& simple_tensor, bool calc_grad, Graph* graph_c
     SimpleTensor(simple_tensor),
     _calc_grad(calc_grad),
     _grad_graph(graph_context) {
-    
-    // std::cout << "Tensor created\n";
     if(_calc_grad  && !_grad_graph->contains(*this) )
         _grad_graph -> addNode( new Node(*this) );
     }
