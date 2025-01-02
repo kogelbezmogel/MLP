@@ -11,12 +11,15 @@
 
 
 class Model {
+
+    friend std::ostream& operator<<(std::ostream& os, const Model& model);
+
     public:
         Model( std::vector<Layer*> layers ) {
             _graph_context = new Graph();
             for(Layer* layer : layers) {
                 _layer_map.insert({layer->getName(), layer});
-                std::cout << "layer: " << layer->getName() << " weight " << str_representation(layer->_weight.getSize()) << " bias " << str_representation(layer->_bias.getSize()) << "\n";
+                // std::cout << "layer: " << layer->getName() << " weight " << str_representation(layer->_weight.getSize()) << " bias " << str_representation(layer->_bias.getSize()) << "\n";
                 layer->setGraph(_graph_context);
             }
             _layer_sequence = layers;
@@ -139,6 +142,8 @@ class Model {
             return err_report;
         }
 
+        Layer* getLayer(std::string name) { return _layer_map[name]; }
+
     private:
         std::map<std::string, Layer*> _layer_map;
         std::vector<Layer*> _layer_sequence;
@@ -146,5 +151,13 @@ class Model {
         loss_fun _loss_fun;
         Graph* _graph_context;
 };
+
+
+std::ostream& operator<<(std::ostream& os, const Model& model) {
+    os << "Model: \n";
+    for( std::pair<std::string, Layer*> pair: model._layer_map )
+        os << " -" << pair.first << "\n";
+    return os;
+}
 
 #endif // __MODEL__

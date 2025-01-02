@@ -322,9 +322,6 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
     std::vector<size_t> p_size = predicted._size;
     std::vector<size_t> r_size = real._size;
 
-    // std::cout << "Predicted: " << (std::string) predicted << "\n";
-    // std::cout << "Real:      " << (std::string) real << "\n";
-
     // the restriction for now is that CCE can be evaluated only on vector 
     if(p_size[0] != 1 || p_size[1] != 1)
         std::cout << "(mse) argument can only be a scalar?!\n";
@@ -364,7 +361,6 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
     }
 
     Tensor t(t3_simple, true, predicted._grad_graph);
-    // std::cout << "Result:    " << (std::string) t << "\n";
     return t;
 }
 

@@ -64,6 +64,11 @@ class Layer {
 
         bool bias() const { return _has_bias; }
 
+        void setWeight( SimpleTensor weight ) {
+            for(size_t i = 0; i < _weight.getSize()[0]; i++)
+                for(size_t j = 0; j < _weight.getSize()[1]; j++)
+                    _weight.set(weight.at({i, j}), {i, j});
+        }
 
     private:
         static int _layer_count;

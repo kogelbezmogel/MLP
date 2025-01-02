@@ -11,14 +11,14 @@ POPULATION_SIZE = 100
 
 
 if __name__ == "__main__":
-    x1_values = np.arange(-1, 1, step=0.3)
-    x2_values = np.arange(-1, 1, step=0.3)
+    x1_values = np.arange(-1, 1, step=0.2)
+    x2_values = np.arange(-1, 1, step=0.2)
 
     def fun(x1, x2):
-        w1 = 3.1
-        w2 = 2
-        b = 10
-        return w1*x1 + w2*x2 + b + np.random.randn(1)
+        w1 = 0.2
+        w2 = -0.9
+        b = 0
+        return w1*w1*x1 - w2*w2*x2 + b + np.random.randn(1)[0] / 50
     
     data_dim = x1_values.shape[0]
     population_data = np.empty([data_dim * data_dim, 3], dtype=np.float32)

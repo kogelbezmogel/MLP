@@ -58,6 +58,8 @@ class SimpleTensor {
 
         float at(std::vector<size_t> point) const;
 
+        void set(float val, std::vector<size_t> point);
+
         static SimpleTensor rand(std::vector<size_t> size, std::pair<float, float> range);
 
         static SimpleTensor identity(size_t size);

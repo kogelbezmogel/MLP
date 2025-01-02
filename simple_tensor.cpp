@@ -449,6 +449,14 @@ float SimpleTensor::at(std::vector<size_t> point) const {
     return *(_data + flat_idx);
 }
 
+void SimpleTensor::set(float val, std::vector<size_t> point) {
+    int flat_idx = 0;
+    for(int i = 0; i < _size.size(); i++)
+        flat_idx += point[i] * _cummulative_size[i];
+
+    *(_data + flat_idx) = val;    
+}
+
 
 SimpleTensor SimpleTensor::identity(size_t size) {
     SimpleTensor tens = SimpleTensor({size, size}, 0.0);
