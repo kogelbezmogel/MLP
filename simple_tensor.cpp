@@ -6,6 +6,7 @@
 
 #include "simple_tensor.h"
 #include "utils.h"
+#include "except.h"
 
 // initialization of random engine
 std::mt19937 SimpleTensor::rand_engine { (long unsigned int) time(NULL) % 101 };
@@ -69,7 +70,12 @@ SimpleTensor::SimpleTensor(std::vector<size_t> size, std::vector<float> data) : 
     _all_elements = all_elements;
 
     if( data.size() != all_elements) {
-        std::cout << "source vector size doesn't match ?!\n";
+        throw WrongSizeException(
+            "Source vector size doesn't match. Trying to fill tensor of "
+            + std::to_string(all_elements)
+            + " elements with data of length "
+            + std::to_string(data.size())
+        );
     }
 
     _data = new float[all_elements];
@@ -237,7 +243,12 @@ SimpleTensor SimpleTensor::operator[] (size_t idx) {
         // (*_weak_ref_count)++;
         t1.evaluateCummulatives();
     } else {
-        std::cout << "Index " << idx << " out of range?!\n";
+        throw IndexOutOfRangeException(
+            "Index "
+            + std::to_string(idx)
+            + " out of range for tensor of shape: "
+            + str_representation(_size)
+        );
     }
     return t1;
 }
@@ -289,7 +300,13 @@ SimpleTensor SimpleTensor::operator+=(const SimpleTensor& t1) {
     }
 
     if( t1._size != _size )
-        std::cout << "(+=) dimensions do not match: " << str_representation(_size) << " vs " << str_representation(t1._size) << "?!\n";
+        throw WrongDimensionsException(
+            "Dimensions do not match for operation (+=). Trying to "
+            + str_representation(_size)
+            + " += "
+            + str_representation(t1._size)
+            + "\n"
+        );
 
     // adding tensors
     for(int i = 0; i < t1._all_elements; i++)
@@ -301,7 +318,13 @@ SimpleTensor SimpleTensor::operator+=(const SimpleTensor& t1) {
 
 SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2) {
     if( t1._size != t2._size )
-        std::cout << "(+) dimensions do not match: " << str_representation(t1._size) << " vs " << str_representation(t2._size) << "?!\n";
+        throw WrongDimensionsException(
+            "Dimensions do not match for operation (+). Trying to "
+            + str_representation(t1._size)
+            + " + "
+            + str_representation(t2._size)
+            + "\n"
+        );
 
     // data of result tensor
     float* t3_data = new float[t1._all_elements];
@@ -332,7 +355,13 @@ SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2) {
     // check for dim conditions
     size_t last_dim = s1[s1.size()-1];
     if( last_dim != s2[0]) // [a, b, ..., c, d] * [d, e] => [a, b, ..., c, e] 
-        std::cout << "(*) dimensions do not match: " << str_representation(s1) << " vs " << str_representation(s2) << "?!\n";
+        throw WrongDimensionsException(
+            "Dimensions do not match for operation (*). Trying to "
+            + str_representation(t1._size)
+            + " * "
+            + str_representation(t2._size)
+            + "\n"
+        );
 
     int number_of_all_rows = s1[0] * t1._cummulative_size[0] / last_dim; // a*b*...*c
     int row_length = last_dim;

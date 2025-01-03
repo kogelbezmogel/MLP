@@ -1,5 +1,6 @@
 #include "tensor.h"
 #include "utils.h"
+#include "except.h"
 
 #include <algorithm>
 #include <cmath>
@@ -113,9 +114,6 @@ Tensor& Tensor::operator=(const Tensor& to_copy) {
 
 
 Tensor TensorOperations::add(Tensor t1, Tensor t2) {
-    if( t1._size != t2._size )
-        std::cout << "(+) tensors size problem?!";
-
     SimpleTensor t3_simple(t1 + t2);
 
     // adding node with local gradient to graph
@@ -126,7 +124,7 @@ Tensor TensorOperations::add(Tensor t1, Tensor t2) {
     if( t1._calc_grad || t2._calc_grad ) {
 
         if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+            throw NoGraphAttachedException("No graph attached.\n");
 
         if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
             t2._grad_graph = t1._grad_graph;
@@ -162,7 +160,7 @@ Tensor TensorOperations::mul(Tensor t1, Tensor t2) {
     if( t1._calc_grad || t2._calc_grad ) {
 
         if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+            throw NoGraphAttachedException("No graph attached.\n");
 
         if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
             t2._grad_graph = t1._grad_graph;
@@ -264,7 +262,7 @@ Tensor TensorOperations::relu(Tensor t1) {
     Graph* t3_graph_context = nullptr;
     if( t1._calc_grad ) {
         if( t1._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+            throw NoGraphAttachedException("No graph attached.\n");
 
         t3_calc_grad = true;
         t3_graph_context = t1._grad_graph;
@@ -324,10 +322,10 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
 
     // the restriction for now is that CCE can be evaluated only on vector 
     if(p_size[0] != 1 || p_size[1] != 1)
-        std::cout << "(mse) argument can only be a scalar?!\n";
-    
+        throw MustBeScalarException("(MSE) loss. Argument can only be a scalar\n");
+
     if( p_size != r_size )
-        std::cout << "(mse) arguments difrent sizes" << str_representation(p_size) << " vs " << str_representation(r_size) << " ?!\n";
+        throw WrongDimensionsException( "(MSE) loss. Arguments with difrent sizes y_pred: " +  str_representation(p_size) + " y_real: " + str_representation(r_size) );
 
     float* t3_data = new float[1]{ 0 };
     std::vector<size_t> t3_size{1, 1};
@@ -339,7 +337,7 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
     if( predicted._calc_grad ) {
 
         if( predicted._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+            throw NoGraphAttachedException("No graph attached.\n");
 
         t3_calc_grad = true;
         t3_graph_context = predicted._grad_graph;
