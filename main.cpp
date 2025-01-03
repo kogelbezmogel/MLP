@@ -66,7 +66,7 @@ int main() {
 
     generateLossLandscape(model, {-2, 2});
 
-    Optimizer optim(model, 0.01);
+    Optimizer optim(model, 0.03);
 
     size_t batch_size = 10;
     SimpleTensor sample;
@@ -88,7 +88,7 @@ int main() {
     std::ofstream fout("learning.csv");
     int num = 0;
     float avg_loss = 0, sum_loss = 0;
-    for(int epoch = 0; epoch < 20; epoch++) {
+    for(int epoch = 0; epoch < 2; epoch++) {
         for(Batch batch : dataloader) {
             num = 0;
             avg_loss = 0;

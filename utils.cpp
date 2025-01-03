@@ -8,4 +8,3 @@ std::string str_representation( std::vector<size_t> size_vec ) {
     representation += "]";
     return representation;
 }
-
