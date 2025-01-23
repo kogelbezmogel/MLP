@@ -45,8 +45,10 @@ class SimpleTensor {
 
         void trim();
 
+        void fill(SimpleTensor data_source);
+
         // makes deep copy 
-        SimpleTensor copy(const SimpleTensor to_copy);
+        SimpleTensor copy();
 
         SimpleTensor slice(size_t start, size_t end);
 

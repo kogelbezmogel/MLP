@@ -2,8 +2,10 @@
 /info
 /old_files
 /datasets
+/gif_plots
 
-a.exe
+*.out
+*.exe
 to_do_list.txt
 *.dot
 *.csv

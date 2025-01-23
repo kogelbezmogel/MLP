@@ -430,6 +430,21 @@ void SimpleTensor::trim() {
     }
 }
 
+void SimpleTensor::fill( SimpleTensor data_source) {
+    if( _size != data_source._size )
+        throw WrongSizeException(
+            "Dimensions do not match for operation (*). Trying to "
+            + str_representation(_size)
+            + " * "
+            + str_representation(data_source._size)
+            + "\n"
+        );
+
+    for(int i = 0; i < data_source._all_elements; i++) {
+        _data[i] = data_source._data[i];
+    }
+}
+
 
 SimpleTensor& SimpleTensor::reshape(std::vector<size_t> new_size) {
     _size = new_size;
@@ -459,12 +474,12 @@ SimpleTensor SimpleTensor::slice(size_t start, size_t end) {  // needs to be mor
 }
 
 
-SimpleTensor SimpleTensor::copy(const SimpleTensor to_copy) {
-    float* t_data = new float[to_copy._all_elements];
-    std::vector<size_t> t_size(to_copy._size);
+SimpleTensor SimpleTensor::copy() {
+    float* t_data = new float[this -> _all_elements];
+    std::vector<size_t> t_size(this -> _size);
 
-    for(int i = 0; i < to_copy._all_elements; i++)
-        t_data[i] = to_copy._data[i];
+    for(int i = 0; i < this -> _all_elements; i++)
+        t_data[i] = this -> _data[i];
 
     return SimpleTensor(t_size, t_data);
 }

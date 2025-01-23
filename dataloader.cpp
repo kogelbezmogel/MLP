@@ -1,8 +1,28 @@
 #include "dataloader.h"
+#include "utils.h"
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <cmath>
+#include <algorithm>
+
+
+std::mt19937 Dataloader::_rand_engine = std::mt19937{ (long unsigned int) time(NULL) % 101 };
+
+Dataloader::Dataloader(std::string file_path, int batch_size, bool shuffle) : _batch_size(batch_size) {
+    this -> _file_path = file_path;
+
+    // std::cout << _file_path << " initialised" << std::endl; 
+    loadDataFromCSV();
+
+    // head();
+    if(shuffle)
+        this -> shuffle();
+    // std::cout << "\n\n";
+    // head();
+
+    generateBatches();
+}
 
 
 std::vector<float> parseLine(std::string line, char sep=',') {
@@ -49,7 +69,7 @@ void Dataloader::loadDataFromCSV() {
         // std::cout << vec[0] << " " << vec[1] << " " << vec[2] << "\n";
     }
 
-    _data_x = SimpleTensor({data_size[0], 2},  data_x);
+    _data_x = SimpleTensor({data_size[0], 2}, data_x);
     _data_y = SimpleTensor({data_size[0], 1}, data_y);
 }
 
@@ -68,22 +88,40 @@ void Dataloader::generateBatches() {
 }
 
 
-Dataloader::Dataloader(std::string file_path, int batch_size, bool shuffle) : _batch_size(batch_size) {
-    this -> _file_path = file_path;
+void Dataloader::shuffle() {
+    size_t length = _data_x.getSize()[0];
+    // std::cout << str_representation(_data_x.getSize() )<< "\n";
+    std::vector<size_t> indexes(length, 0);
+    for(int i = 0; i < length; i++) {
+        indexes[i] = i;
+    }
+    // std::cout << str_representation(indexes) << "\n";
+    std::shuffle(indexes.begin(), indexes.end(), _rand_engine);
+    // std::cout << str_representation(indexes) << "\n";
 
-    // std::cout << _file_path << " initialised" << std::endl; 
-    loadDataFromCSV();
+    SimpleTensor temp;
+    for(int idx_1 = 0, idx_2; idx_1 < length; idx_1++) {
+        idx_2 = indexes[idx_1];
 
-    if(shuffle)
-        this -> shuffle();
+        temp = _data_x[idx_1].copy();
+        _data_x[idx_1].fill( _data_x[idx_2] );
+        _data_x[idx_2].fill( temp );
 
-    generateBatches();
+        temp = _data_y[idx_1].copy();
+        _data_y[idx_1].fill(_data_y[idx_2]);
+        _data_y[idx_2].fill( temp );
+    }
+}
 
+void Dataloader::head(int rows) {
+    for( int i = 0; i < rows; i++) {
+        std::cout << _data_x[i] << " | " << _data_y[i] << "\n";
+    }
 }
 
 
-void Dataloader::shuffle() {
-    // size_t length = _data_x.getSize()[0];
-
-    // for()
+void Dataloader::tail(int rows) {
+    for( int i = 0; i < rows; i++) {
+            std::cout << _data_x[ _data_x.getSize()[0]-rows-1 + i ] << " | " << _data_y[ _data_x.getSize()[0]-rows-1 + i ];
+    }
 }

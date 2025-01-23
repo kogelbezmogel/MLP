@@ -2,6 +2,7 @@
 # define DATALOADER
 
 #include <iostream>
+#include <random>
 #include "simple_tensor.h"
 
 
@@ -26,8 +27,14 @@ class Dataloader {
         size_t _batch_size;
         std::vector< Batch > _batches;
 
+        static std::mt19937 _rand_engine;
+
         void loadDataFromCSV();
         void generateBatches();
+
+        void head(int rows = 5);
+        void tail(int rows = 5);
+
 
     public:
 
