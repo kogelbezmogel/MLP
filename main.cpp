@@ -11,19 +11,11 @@
 #include "simple_tensor.h"
 
 
-// int main() {
-//     SimpleTensor t1({2, 2}, {1, 2, 3, 4});
-//     SimpleTensor t2({3, 3}, {1, 2, 3, 4, 5, 6, 7, 8, 9});
-
-//     std::cout << t1 * t2;
-// }
-
-
 void generateLossLandscape(Model& model, std::pair<float, float> range) {
-    float step = 0.1;
+    float step = 0.05;
     float w1, w2;
 
-    Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", 1, false);
+    Dataloader dataloader("datasets/RegressionProblem/at2po30.csv", 1, false);
 
     float min_w1, min_w2, min_loss = 10e10;
     float max_loss = -1, avg_loss;
@@ -78,11 +70,11 @@ int main() {
     Model model({
         new Layer(2, 1, false, ""),
     });
-    model["layer_0"] -> setWeight( SimpleTensor({2, 1}, {2, 2}) );
+    model["layer_0"] -> setWeight( SimpleTensor({2, 1}, {1, 1.8}) );
 
     // generateLossLandscape(model, {-2, 2});
     
-    Optimizer optim(model, 0.1);
+    Optimizer optim(model, 0.07);
 
     size_t batch_size = 10;
     SimpleTensor sample;
@@ -94,8 +86,8 @@ int main() {
     Tensor y_p, l;
 
 
-    Dataloader dataloader("datasets\\RegressionProblem\\at2po30.csv", batch_size, true);
-    Dataloader dataloader_check("datasets\\RegressionProblem\\at2po30.csv", batch_size, false);
+    Dataloader dataloader("datasets//RegressionProblem//at2po30.csv", batch_size, true);
+    Dataloader dataloader_check("datasets//RegressionProblem//at2po30.csv", batch_size, false);
 
 
     auto start = std::chrono::high_resolution_clock::now();
