@@ -354,7 +354,7 @@ SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2) {
     
     // check for dim conditions
     size_t last_dim = s1[s1.size()-1];
-    if( last_dim != s2[0]) // [a, b, ..., c, d] * [d, e] => [a, b, ..., c, e] 
+    if(last_dim != s2[0]) // [a, b, ..., c, d] * [d, e] => [a, b, ..., c, e] 
         throw WrongDimensionsException(
             "Dimensions do not match for operation (*). Trying to "
             + str_representation(t1._size)

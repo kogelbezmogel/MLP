@@ -68,9 +68,12 @@ void Graph::backwards() {
 
     // setting local_grad and grad of last node to 1
     Node* last_node = _nodes_in_order[ _nodes_in_order.size()-1 ];
+    Node* before_last_node = _nodes_in_order[ _nodes_in_order.size()-2 ];
 
+    // last node need to have dimensions which will give scalar value at the last multiplication. Therefore it should be reverse of the previous local derivative
     // std::cout << "last " << last_node->getId() << " size: " <<  str_representation( last_node->getValue().getSize() ) << "\n";
-    last_node -> setWholeGradValue( SimpleTensor(last_node->getValue().getSize(), 1.0) );
+    std::vector<size_t> first_whole_grad_size = before_last_node->getLocalGradValues()[last_node -> getId() ].getSize();
+    last_node -> setWholeGradValue( SimpleTensor::identity(first_whole_grad_size[first_whole_grad_size.size() - 1]) );
 
     // std::cout << "Last node:" 
     //           << str_representation(last_node -> getValue().getSize())

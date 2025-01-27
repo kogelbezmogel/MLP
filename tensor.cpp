@@ -362,56 +362,120 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
     return t;
 }
 
-// Tensor TensorOperations::cceLoss(Tensor& predicted, SimpleTensor& real) {
-//     std::vector<size_t> p_size = predicted._size;
-//     std::vector<size_t> r_size = real._size;
 
-//     // the restriction for now is that CCE can be evaluated only on vector 
-//     if(p_size[1] != 1)
-//         std::cout << "(cce) argument can only be vector?!\n";
+Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
+    // real need to be a label of true class therefore a index at which the biggest value should appear. size [1 x 1]
+    // predicted it the same time would be a vector of size [n x 1]
+
+    std::vector<size_t> p_size = predicted._size;
+    std::vector<size_t> r_size = real._size;
+
+    // the restriction for now is that CCE can be evaluated only on vector 
+    if(p_size[0] != 1 && p_size[1] != 1)
+        std::cout << "(cce) argument can only be a scalar value?!\n";
     
-//     if( p_size != r_size )
-//         std::cout << "(cce) arguments difrent sizes" << str_representation(p_size) << " vs " << str_representation(r_size) << " ?!\n";
+    float* t3_data = new float[1]{ 0 };
+    std::vector<size_t> t3_size{1, 1};
 
-//     float* t3_data = new float[1]{ 0 };
-//     std::vector<size_t> t3_size{1, 1};
+    // size_t true_idx = 0;
+    size_t true_idx = real.at({0, 0});
 
-//     size_t true_idx = 0;
-//     for(int i = 0; i < r_size[0]; i++) {
-//         if( real._data[i] == 1.0 )
-//             true_idx = i;
-//         (*t3_data) += std::exp( predicted._data[i] );
-//     }
-//     (*t3_data) = (-1) * std::log( predicted._data[true_idx] / t3_data[0] );
+    for(int i = 0; i < p_size[0]; i++) {
+        // if( real._data[i] == 1.0 )
+        //     true_idx = i;
+        t3_data[0] += std::exp( predicted._data[i] );
+    }
 
-//     // graph 
-//     bool t3_calc_grad = false;
-//     Graph* t3_graph_context = nullptr;
-//     if( predicted._calc_grad ) {
+    t3_data[0] = (-1) * std::log( std::exp(predicted._data[true_idx]) / t3_data[0] );
+    // t3_data[0] = std::exp(predicted._data[true_idx]) / t3_data[0];
 
-//         if( predicted._grad_graph == nullptr )
-//             std::cout << "(+) no graph attached?!";
+    // graph 
+    bool t3_calc_grad = false;
+    Graph* t3_graph_context = nullptr;
+    if( predicted._calc_grad ) {
 
-//         t3_calc_grad = true;
-//         t3_graph_context = predicted._grad_graph;
-//     }
+        if( predicted._grad_graph == nullptr )
+            std::cout << "(+) no graph attached?!";
 
-//     SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
+        t3_calc_grad = true;
+        t3_graph_context = predicted._grad_graph;
+    }
 
-//     if(t3_calc_grad) {
-//         Node* t3_node = new Node(t3_simple); // !!!!
+    SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
 
-//         t3_node -> setOperation("relu");
-//         t3_graph_context -> addNode( t3_node );
-//         t3_graph_context->getNode(predicted) -> addChild(t3_node);
-//         t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
+    if(t3_calc_grad) {
+        Node* t3_node = new Node(t3_simple); // !!!!
+
+        t3_node -> setOperation("cce");
+        t3_graph_context -> addNode( t3_node );
+        t3_graph_context->getNode(predicted) -> addChild(t3_node);
+        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
         
-//         // adding derivatives
-//         std::map<std::string, SimpleTensor> derivatives = cceLossDerivatives(predicted, real, t3_simple);
-//         t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
-//     }
-//     return Tensor(t3_simple, true, predicted._grad_graph);
-// }
+        // adding derivatives
+        std::map<std::string, SimpleTensor> derivatives = cceLossDerivatives(predicted, real, t3_simple);
+        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
+    }
+    return Tensor(t3_simple, true, predicted._grad_graph);
+}
+
+
+Tensor TensorOperations::bceLoss(Tensor predicted, SimpleTensor real) {
+    // here always predicted and real are the same size [1 x 1] real is 0 or 1 and predicted is number from range [0, 1].
+
+    std::vector<size_t> p_size = predicted._size;
+    std::vector<size_t> r_size = real._size;
+
+    // add check for dimenions and sizes !!
+
+    float* t3_data = new float[1]{ 0 };
+    std::vector<size_t> t3_size{1, 1};
+
+    size_t label = real.at({0, 0});
+
+    // probability of true (sigmoid)
+    // if( predicted._data[0] < -100 ) {
+    //     predicted._data[0] == -100;
+    // }
+    t3_data[0] = 1.0 / (1 + std::exp(-predicted._data[0]));
+
+    // using probaility to get bce(y, y_t)
+    if( label == 1 ) {
+        t3_data[0] = - std::log( t3_data[0] );
+    } else if( label == 0 ) {
+        t3_data[0] = - std::log( 1 - t3_data[0] );
+    } else {
+        // throw some exception !!!
+    }
+
+    // graph 
+    bool t3_calc_grad = false;
+    Graph* t3_graph_context = nullptr;
+    if( predicted._calc_grad ) {
+
+        if( predicted._grad_graph == nullptr )
+            std::cout << "(+) no graph attached?!";
+
+        t3_calc_grad = true;
+        t3_graph_context = predicted._grad_graph;
+    }
+
+    SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
+
+    if(t3_calc_grad) {
+        Node* t3_node = new Node(t3_simple);
+
+        t3_node -> setOperation("bce");
+        t3_graph_context -> addNode( t3_node );
+        t3_graph_context->getNode(predicted) -> addChild(t3_node);
+        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
+        
+        // adding derivatives
+        std::map<std::string, SimpleTensor> derivatives = bceLossDerivatives(predicted, real, t3_simple);
+        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
+    }
+    return Tensor(t3_simple, true, predicted._grad_graph);
+}
+
 
 std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
     std::vector<size_t> t3_size{1, 1};
@@ -424,35 +488,80 @@ std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleT
     return derivatives;
 }
 
-// std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleTensor& predicted, SimpleTensor& real, SimpleTensor& t3) {
-//     // std::vector<float> res(vec.size(), 0);
-//     // for(int i=0; i<vec.size(); i++) {
-//     //     float x=0, y=0, sec=0;
 
-//     //     x = std::exp( vec[i] );
-//     //     for(float el : vec)
-//     //         y += std::exp(el);
+std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
+    // std::vector<float> res(vec.size(), 0);
+    // for(int i=0; i<vec.size(); i++) {
+    //     float x=0, y=0, sec=0;
 
-//     //     if(i==y_true)
-//     //         sec = 1;
-//     //     res[i] = x / y - sec;
-//     // }
+    //     x = std::exp( vec[i] );
+    //     for(float el : vec)
+    //         y += std::exp(el);
 
-//     // SimpleTensor der_t3byt1(der_t3byt1_size, der_t3byt1_data);
+    //     if(i==y_true)
+    //         sec = 1;
+    //     res[i] = x / y - sec;
+    // }
+
+    std::vector<size_t> der_t3bypredicted_size = predicted.getSize();
+    // std::reverse(der_t3bypredicted_size.begin(), der_t3bypredicted_size.end()); // derivative is of size of transposed predicted tensor
+    float* der_t3bypredicted_data = new float[predicted._all_elements];
+
+    // summing exponent of all element in predicted vector
+    float general_sum = 0;
+    for(int i = 0; i < predicted._all_elements; i++)
+        general_sum += std::exp(predicted._data[i]);    
+
+    // creating fractions with general sum
+    for(int i = 0; i < predicted._all_elements; i++)
+        der_t3bypredicted_data[i] = std::exp(predicted._data[i]) / general_sum;
+    der_t3bypredicted_data[ (size_t) real._data[0] ] -= 1; // for true_index derivative is (fraction - 1)
+
+    SimpleTensor der_t3bypredicted(der_t3bypredicted_size, der_t3bypredicted_data);
  
-//     std::map<std::string, SimpleTensor> derivatives;
-//     derivatives.insert({predicted, SimpleTensor()});
-//     return derivatives;
-// }
+    std::map<std::string, SimpleTensor> derivatives;
+    derivatives.insert({predicted, der_t3bypredicted});
+    return derivatives;
+}
+
+
+std::map<std::string, SimpleTensor> TensorOperations::bceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
+    std::vector<size_t> der_t3bypredicted_size = predicted.getSize();
+    // std::reverse(der_t3bypredicted_size.begin(), der_t3bypredicted_size.end()); // derivative is of size of transposed predicted tensor
+    float* der_t3bypredicted_data = new float[predicted._all_elements];
+
+    // sigmoid is counted second time
+    float probability = 1;
+    probability /= 1 + std::exp(predicted._data[0]); 
+
+    size_t label = real._data[0];
+    
+    // creating fractions with general sum
+    if(label == 1) {
+        der_t3bypredicted_data[0] = probability - 1;
+    }
+    else if(label == 0) {
+        der_t3bypredicted_data[0] = -probability;
+    } else {
+        // throw some exception
+    }
+    SimpleTensor der_t3bypredicted(der_t3bypredicted_size, der_t3bypredicted_data);
+ 
+    std::map<std::string, SimpleTensor> derivatives;
+    derivatives.insert({predicted, der_t3bypredicted});
+    return derivatives;
+}
 
 
 std::map<std::string, act_fun> TensorOperations::_activation_map {
     {"relu", &TensorOperations::relu}
 };
 
+
 std::map<std::string, loss_fun> TensorOperations::_loss_map {
     {"mse", &TensorOperations::mseLoss},
-    // {"cce", &TensorOperations::cceLoss}
+    {"cce", &TensorOperations::cceLoss},
+    {"bce", &TensorOperations::bceLoss}
 };
 
         
