@@ -6,12 +6,12 @@ import matplotlib.pyplot as plt
 SAVE_PATH = "datasets/TwoClassProblem/at2po30.csv"
 NUMBER_OF_CLASSES = 2
 NUMBER_OF_FEATURES = 2
-POPULATION_SIZE = 300
+POPULATION_SIZE = 600
 
 # means = [ np.array(arr) for arr in ([1, 1, 1], [1, 1, -1], [1, -1, -1]) ]
 # variances = [ np.array(arr) for arr in ([1, 1, 1], [1, 1, 1], [1, 1, 1]) ]
 
-means = [ np.array(arr) for arr in ([-1, 1], [1, -1]) ]
+means = [ np.array(arr) for arr in ([-0.8, -0.8], [0.8, 0.8]) ]
 variances = [ np.array(arr) for arr in ([1, 1], [1, 1]) ]
 
 if __name__ == "__main__":

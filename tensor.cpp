@@ -421,6 +421,8 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
 
 Tensor TensorOperations::bceLoss(Tensor predicted, SimpleTensor real) {
     // here always predicted and real are the same size [1 x 1] real is 0 or 1 and predicted is number from range [0, 1].
+    // function takes predicted as a real number from range (-inf, +inf). To omit problems it constrained to (-100 +100)
+    // Probablitity means the probability of label=1 not 0.
 
     std::vector<size_t> p_size = predicted._size;
     std::vector<size_t> r_size = real._size;
@@ -432,17 +434,20 @@ Tensor TensorOperations::bceLoss(Tensor predicted, SimpleTensor real) {
 
     size_t label = real.at({0, 0});
 
-    // probability of true (sigmoid)
-    // if( predicted._data[0] < -100 ) {
-    //     predicted._data[0] == -100;
-    // }
+    // contrain check
+    if( predicted._data[0] < -100 )
+        predicted._data[0] == -100.0;
+    else if( predicted._data[0] > 100)
+        predicted._data[0] == 100.0;
+
+    // calculating probability of true (sigmoid)
     t3_data[0] = 1.0 / (1 + std::exp(-predicted._data[0]));
 
     // using probaility to get bce(y, y_t)
     if( label == 1 ) {
-        t3_data[0] = - std::log( t3_data[0] );
+        t3_data[0] = -std::log(t3_data[0]);
     } else if( label == 0 ) {
-        t3_data[0] = - std::log( 1 - t3_data[0] );
+        t3_data[0] = -std::log(1 - t3_data[0]);
     } else {
         // throw some exception !!!
     }
@@ -453,7 +458,7 @@ Tensor TensorOperations::bceLoss(Tensor predicted, SimpleTensor real) {
     if( predicted._calc_grad ) {
 
         if( predicted._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+            std::cout << "(+) no graph attached?!"; // !!! add exception
 
         t3_calc_grad = true;
         t3_graph_context = predicted._grad_graph;
@@ -530,18 +535,16 @@ std::map<std::string, SimpleTensor> TensorOperations::bceLossDerivatives(SimpleT
     // std::reverse(der_t3bypredicted_size.begin(), der_t3bypredicted_size.end()); // derivative is of size of transposed predicted tensor
     float* der_t3bypredicted_data = new float[predicted._all_elements];
 
-    // sigmoid is counted second time
-    float probability = 1;
-    probability /= 1 + std::exp(predicted._data[0]); 
+    float probability = t3._data[0];
 
     size_t label = real._data[0];
     
     // creating fractions with general sum
     if(label == 1) {
-        der_t3bypredicted_data[0] = probability - 1;
+        der_t3bypredicted_data[0] = probability;
     }
     else if(label == 0) {
-        der_t3bypredicted_data[0] = -probability;
+        der_t3bypredicted_data[0] = 1 - probability;
     } else {
         // throw some exception
     }

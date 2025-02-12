@@ -19,10 +19,10 @@ int main() {
         new Layer(2, 1, false, "")
     });
 
-    generateLossLandscape(model, {0, 4}, {-2, 2});
+    // generateLossLandscape(model, {0, 4}, {-2, 2});
 
 
-    Optimizer optim(model, 0.0005);
+    Optimizer optim(model, 0.00005);
 
     size_t batch_size = 64;
     SimpleTensor sample;
@@ -39,9 +39,10 @@ int main() {
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::ofstream fout("learning.csv");
+    // std::ofstream fout("learning.csv");
     int num = 0;
     float avg_loss = 0, sum_loss = 0;
+    float accuracy = 0;
 
     // starting point loss  
     sum_loss = 0;
@@ -51,24 +52,37 @@ int main() {
             sam = batch_check.x[i].reshape({2, 1});
 
             y_p = model(sam);
+            if(y_p.at({0, 0}) > 0.5 && y_r.at({0, 0}) == 1)
+                    accuracy++;
+                else if(y_p.at({0, 0}) < 0.5 && y_r.at({0, 0}) == 0)
+                    accuracy++;
             l = TensorOperations::bceLoss(y_p, y_r);
 
             sum_loss += l.at({0, 0});
             l.getGraphContext() -> clearSequence();
+            num++;
         }
     }
-    fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
+    std::cout << "e " << -1 <<  " | avg_loss: " << sum_loss / num << " avg_acc: " << accuracy / num << "\n";
+
+    // fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 
 
     for(int epoch = 0; epoch < 100; epoch++) {
         for(Batch batch : dataloader) {
             num = 0;
+            accuracy = 0;
             avg_loss = 0;
             for(int i = 0; i < batch.x.getSize()[0]; i++) {
                 y_real = batch.y[i].reshape({1, 1});
                 sample = batch.x[i].reshape({2, 1});
 
                 y_pred = model(sample);
+                if(y_pred.at({0, 0}) > 0.5 && y_real.at({0, 0}) == 1)
+                    accuracy++;
+                else if(y_pred.at({0, 0}) < 0.5 && y_real.at({0, 0}) == 0)
+                    accuracy++;
+
                 loss = TensorOperations::bceLoss(y_pred, y_real);
 
                 // std::cout << "y_true: " << y_real.at({0, 0}) << " y_pred: [" << y_pred.at({0, 0}) << "] " << " loss : " << loss.at({0, 0}) << "\n"; 
@@ -80,24 +94,24 @@ int main() {
 
                 num++;
 
-                sum_loss = 0;
-                for(Batch batch_check : dataloader_check) {
-                    for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
-                        y_r = batch_check.y[j].reshape({1, 1});
-                        sam = batch_check.x[j].reshape({2, 1});
+                // sum_loss = 0;
+                // for(Batch batch_check : dataloader_check) {
+                //     for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
+                //         y_r = batch_check.y[j].reshape({1, 1});
+                //         sam = batch_check.x[j].reshape({2, 1});
 
-                        y_p = model(sam);
-                        l = TensorOperations::bceLoss(y_p, y_r);
+                //         y_p = model(sam);
+                //         l = TensorOperations::bceLoss(y_p, y_r);
 
-                        sum_loss += l.at({0, 0});
-                        l.getGraphContext() -> clearSequence();
-                    }
-                }
-                fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
+                //         sum_loss += l.at({0, 0});
+                //         l.getGraphContext() -> clearSequence();
+                //     }
+                // }
+                // fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 
             }
         }
-        std::cout << "avg_loss: " << avg_loss / num << "\n";
+        std::cout << "e " << epoch <<  " | avg_loss: " << avg_loss / num << " avg_acc: " << accuracy / num << "\n";
     }
 
     std::cout << "final weights: " << model.getLayer("layer_0")->getWeight().at({0, 0}) << ", " << model.getLayer("layer_0")->getWeight().at({0, 1}) << "\n\n";
