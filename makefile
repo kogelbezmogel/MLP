@@ -1,8 +1,8 @@
 CC = g++
 CFLAGS = -g
 
-main: main.o simple_tensor.o tensor.o utils.o node.o graph.o dataloader.o layer.o model.o
-	$(CC) $(CFLAGS) -o main.out main.o simple_tensor.o tensor.o utils.o node.o graph.o dataloader.o layer.o model.o
+main: main.o simple_tensor.o tensor.o tensor_operations.o utils.o node.o graph.o dataloader.o layer.o model.o
+	$(CC) $(CFLAGS) -o main.out main.o simple_tensor.o tensor.o tensor_operations.o utils.o node.o graph.o dataloader.o layer.o model.o
 	# $(MAKE) clean
 
 main.o: main.cpp simple_tensor.h tensor.h utils.h node.h graph.h dataloader.h
@@ -13,6 +13,9 @@ simple_tensor.o: simple_tensor.cpp simple_tensor.h
 
 tensor.o: tensor.cpp simple_tensor.h graph.h
 	$(CC) $(CFLAGS) -c tensor.cpp
+
+tensor_operations.o: tensor_operations.cpp tensor_operations.h
+	$(CC) $(CFLAGS) -c tensor_operations.cpp
 
 utils.o: utils.cpp utils.h
 	$(CC) $(CFLAGS) -c utils.cpp

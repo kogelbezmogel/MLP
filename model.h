@@ -4,6 +4,7 @@
 #include "layer.h"
 #include "utils.h"
 #include "graph.h"
+#include "tensor_operations.h"
 
 #include <map>
 #include <string>

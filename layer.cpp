@@ -1,4 +1,6 @@
 #include "layer.h"
+#include "tensor_operations.h"
+
 
 int Layer::_layer_count = 0;
 
