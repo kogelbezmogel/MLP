@@ -13,118 +13,118 @@
 
 void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pair<float, float> range2);
 
-int main() {
+// int main() {
 
-    Model model({
-        new Layer(2, 1, false, "")
-    });
+//     Model model({
+//         new Layer(2, 1, false, "")
+//     });
 
-    SimpleTensor weight_mod({1, 2}, {3, 6});
-    model.getLayer("layer_0") -> setWeight(weight_mod);
-
-
-    // generateLossLandscape(model, {0, 3}, {0, 3});
+//     SimpleTensor weight_mod({1, 2}, {3, 6});
+//     model.getLayer("layer_0") -> setWeight(weight_mod);
 
 
-    Optimizer optim(model, 0.002);
-
-    size_t batch_size = 64;
-    SimpleTensor sample;
-    SimpleTensor y_real;
-    Tensor y_pred, loss;
-
-    SimpleTensor sam;
-    SimpleTensor y_r;
-    Tensor y_p, l;
-
-    // Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
-    Dataloader dataloader_check("datasets/TwoClassProblem/at2po30.csv", batch_size, false);
+//     // generateLossLandscape(model, {0, 3}, {0, 3});
 
 
-    auto start = std::chrono::high_resolution_clock::now();
+//     Optimizer optim(model, 0.002);
 
-    std::ofstream fout("learning.csv");
-    int num = 0;
-    float avg_loss = 0, sum_loss = 0;
-    float accuracy = 0;
+//     size_t batch_size = 64;
+//     SimpleTensor sample;
+//     SimpleTensor y_real;
+//     Tensor y_pred, loss;
 
-    // starting point loss  
-    sum_loss = 0;
-    for(Batch batch_check : dataloader_check) {
-        for(int i = 0; i < batch_check.x.getSize()[0]; i++) {
-            y_r = batch_check.y[i].reshape({1, 1});
-            sam = batch_check.x[i].reshape({2, 1});
+//     SimpleTensor sam;
+//     SimpleTensor y_r;
+//     Tensor y_p, l;
 
-            y_p = model(sam);
-            if(y_p.at({0, 0}) > 0.5 && y_r.at({0, 0}) == 1)
-                    accuracy++;
-                else if(y_p.at({0, 0}) < 0.5 && y_r.at({0, 0}) == 0)
-                    accuracy++;
-            l = TensorOperations::bceLoss(y_p, y_r);
-
-            sum_loss += l.at({0, 0});
-            l.getGraphContext() -> clearSequence();
-            num++;
-        }
-    }
-    std::cout << "e -" <<  " | avg_loss: " << sum_loss / num << " avg_acc: " << accuracy / num << "\n";
-
-    fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
+//     // Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
+//     Dataloader dataloader_check("datasets/TwoClassProblem/at2po30.csv", batch_size, false);
 
 
-    for(int epoch = 0; epoch < 4; epoch++) {
-        Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
-        for(Batch batch : dataloader) {
-            num = 0;
-            accuracy = 0;
-            avg_loss = 0;
-            for(int i = 0; i < batch.x.getSize()[0]; i++) {
-                y_real = batch.y[i].reshape({1, 1});
-                sample = batch.x[i].reshape({2, 1});
+//     auto start = std::chrono::high_resolution_clock::now();
 
-                y_pred = model(sample);
-                if(y_pred.at({0, 0}) > 0.5 && y_real.at({0, 0}) == 1)
-                    accuracy++;
-                else if(y_pred.at({0, 0}) < 0.5 && y_real.at({0, 0}) == 0)
-                    accuracy++;
+//     std::ofstream fout("learning.csv");
+//     int num = 0;
+//     float avg_loss = 0, sum_loss = 0;
+//     float accuracy = 0;
 
-                loss = TensorOperations::bceLoss(y_pred, y_real);
+//     // starting point loss  
+//     sum_loss = 0;
+//     for(Batch batch_check : dataloader_check) {
+//         for(int i = 0; i < batch_check.x.getSize()[0]; i++) {
+//             y_r = batch_check.y[i].reshape({1, 1});
+//             sam = batch_check.x[i].reshape({2, 1});
 
-                // std::cout << "y_true: " << y_real.at({0, 0}) << " y_pred: [" << y_pred.at({0, 0}) << "] " << " loss : " << loss.at({0, 0}) << "\n"; 
+//             y_p = model(sam);
+//             if(y_p.at({0, 0}) > 0.5 && y_r.at({0, 0}) == 1)
+//                     accuracy++;
+//                 else if(y_p.at({0, 0}) < 0.5 && y_r.at({0, 0}) == 0)
+//                     accuracy++;
+//             l = TensorOperations::bceLoss(y_p, y_r);
 
-                avg_loss += loss.at({0, 0});
-                loss.getGraphContext() -> backwards();
-                optim.step();
-                loss.getGraphContext() -> clearSequence();
+//             sum_loss += l.at({0, 0});
+//             l.getGraphContext() -> clearSequence();
+//             num++;
+//         }
+//     }
+//     std::cout << "e -" <<  " | avg_loss: " << sum_loss / num << " avg_acc: " << accuracy / num << "\n";
 
-                num++;
+//     fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 
-                sum_loss = 0;
-                for(Batch batch_check : dataloader_check) {
-                    for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
-                        y_r = batch_check.y[j].reshape({1, 1});
-                        sam = batch_check.x[j].reshape({2, 1});
 
-                        y_p = model(sam);
-                        l = TensorOperations::bceLoss(y_p, y_r);
+//     for(int epoch = 0; epoch < 4; epoch++) {
+//         Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
+//         for(Batch batch : dataloader) {
+//             num = 0;
+//             accuracy = 0;
+//             avg_loss = 0;
+//             for(int i = 0; i < batch.x.getSize()[0]; i++) {
+//                 y_real = batch.y[i].reshape({1, 1});
+//                 sample = batch.x[i].reshape({2, 1});
 
-                        sum_loss += l.at({0, 0});
-                        l.getGraphContext() -> clearSequence();
-                    }
-                }
-                fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
+//                 y_pred = model(sample);
+//                 if(y_pred.at({0, 0}) > 0.5 && y_real.at({0, 0}) == 1)
+//                     accuracy++;
+//                 else if(y_pred.at({0, 0}) < 0.5 && y_real.at({0, 0}) == 0)
+//                     accuracy++;
 
-            }
-        }
-        std::cout << "e " << epoch <<  " | avg_loss: " << avg_loss / num << " avg_acc: " << accuracy / num << "\n";
-    }
+//                 loss = TensorOperations::bceLoss(y_pred, y_real);
 
-    std::cout << "final weights: " << model.getLayer("layer_0")->getWeight().at({0, 0}) << ", " << model.getLayer("layer_0")->getWeight().at({0, 1}) << "\n\n";
-    auto stop = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-    std::cout << "time: " << duration.count() << " miliseconds\n";
+//                 // std::cout << "y_true: " << y_real.at({0, 0}) << " y_pred: [" << y_pred.at({0, 0}) << "] " << " loss : " << loss.at({0, 0}) << "\n"; 
 
-}
+//                 avg_loss += loss.at({0, 0});
+//                 loss.getGraphContext() -> backwards();
+//                 optim.step();
+//                 loss.getGraphContext() -> clearSequence();
+
+//                 num++;
+
+//                 sum_loss = 0;
+//                 for(Batch batch_check : dataloader_check) {
+//                     for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
+//                         y_r = batch_check.y[j].reshape({1, 1});
+//                         sam = batch_check.x[j].reshape({2, 1});
+
+//                         y_p = model(sam);
+//                         l = TensorOperations::bceLoss(y_p, y_r);
+
+//                         sum_loss += l.at({0, 0});
+//                         l.getGraphContext() -> clearSequence();
+//                     }
+//                 }
+//                 fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
+
+//             }
+//         }
+//         std::cout << "e " << epoch <<  " | avg_loss: " << avg_loss / num << " avg_acc: " << accuracy / num << "\n";
+//     }
+
+//     std::cout << "final weights: " << model.getLayer("layer_0")->getWeight().at({0, 0}) << ", " << model.getLayer("layer_0")->getWeight().at({0, 1}) << "\n\n";
+//     auto stop = std::chrono::high_resolution_clock::now();
+//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+//     std::cout << "time: " << duration.count() << " miliseconds\n";
+
+// }
 
 
 
@@ -284,55 +284,63 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 
 ////////////////////////////////////////////////// Learning
 
-// int main() {
-//     Model model({
-//         new Layer(2, 4, false, ""),
-//         new Layer(4, 8, false, ""),
-//         new Layer(8, 16, false, ""),
-//         new Layer(16, 1, false, "")
-//     });
+int main() {
+    Model model({
+        new Layer(2, 4, true, "relu"),
+        new Layer(4, 8, true, "relu"),
+        new Layer(8, 16, true, "relu"),
+        new Layer(16, 1, false, "relu")
+    });
 
-//     Optimizer optim(model, 0.0001);
+    Optimizer optim(model, 0.0001);
 
-//     size_t batch_size = 10;
-//     SimpleTensor sample;
-//     SimpleTensor y_real;
-//     Tensor y_pred, loss;
+    size_t batch_size = 10;
+    SimpleTensor sample;
+    SimpleTensor y_real;
+    Tensor y_pred, loss;
 
-//     Dataloader dataloader("datasets/RegressionProblem/at2po30.csv", batch_size, false);
+    Dataloader dataloader("datasets//RegressionProblem//at2po30.csv", batch_size, true);
 
-//     auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 
-//     int num = 0;
-//     float avg_loss = 0;
-//     for(int epoch = 0; epoch < 3000; epoch++) {
-//         for(Batch batch : dataloader) {
-//             num = 0;
-//             avg_loss = 0;
-//             for(int i = 0; i < batch.x.getSize()[0]; i++) {
-//                 y_real = batch.y[i].reshape({1, 1});
-//                 sample = batch.x[i].reshape({2, 1});
+    try {
 
-//                 y_pred = model(sample);
-//                 loss = TensorOperations::mseLoss(y_pred, y_real);
+    int num = 0;
+    float avg_loss = 0;
+    for(int epoch = 0; epoch < 200; epoch++) {
+        for(Batch batch : dataloader) {
+            num = 0;
+            avg_loss = 0;
+            for(int i = 0; i < batch.x.getSize()[0]; i++) {
+                y_real = batch.y[i].reshape({1, 1});
+                sample = batch.x[i].reshape({2, 1});
 
-//                 avg_loss += loss.at({0, 0});
-//                 loss.getGraphContext() -> backwards();
-//                 optim.step();
-//                 loss.getGraphContext() -> clearSequence();
+                // std::cout << sample.getId() << "\n";
 
-//                 num++;
-//                 break;
-//             }
-//             break;
-//         }
-//         std::cout << "avg_loss: " << avg_loss / num << "\n";
-//         break;
-//     }
-//     auto stop = std::chrono::high_resolution_clock::now();
-//     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
-//     std::cout << "time: " << duration.count() << " miliseconds\n";
-// }
+                y_pred = model(sample);
+                loss = TensorOperations::mseLoss(y_pred, y_real);
+
+                avg_loss += loss.at({0, 0});
+                loss.getGraphContext() -> backwards();
+                optim.step();
+                loss.getGraphContext() -> clearSequence();
+
+                num++;
+                // break;
+            }
+            // break;
+        }
+        std::cout << "avg_loss: " << avg_loss / num << "\n";
+        // break;
+    }
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
+    std::cout << "time: " << duration.count() << " miliseconds\n";
+
+    } catch(WrongDimensionsException e) {
+        std::cout << "\n" << e.what() << "\n";
+    }
+}
 
 // // 50 samples dataset , 50 epochs (2, 16, relu) (16, 3, relu) (3, 1, relu)
 // // 1) 12.5s 13s 13.5s

@@ -13,17 +13,13 @@
 
 class Graph {
     private:
-        // std::vector<Node*> _nodes;
-        // std::vector<Node*> _nodes_in_order;
-        // std::map<std::string, Node*> _nodes_map;
-
-        Graph( const Graph& graph) { };
-    
-    public:
         std::vector<Node*> _nodes;
         std::vector<Node*> _nodes_in_order;
         std::map<std::string, Node*> _nodes_map;
 
+        Graph( const Graph& graph) { };
+    
+    public:
         Graph();
 
         ~Graph();
@@ -53,6 +49,8 @@ class Graph {
         // const std::vector<Node*> get_nodes() const { return _nodes; };
 
         void saveGraphToFile(std::string file_path);
+
+        static void addNodeToGraph(std::vector<SimpleTensor*> args, std::map<std::string, SimpleTensor> derivatives, SimpleTensor* t3_simple, Graph* graph_ptr, std::string operartion);
 };
 
 

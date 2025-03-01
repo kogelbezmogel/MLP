@@ -32,7 +32,10 @@ Tensor Model::operator() (SimpleTensor input) {
         x = Tensor(input, false, nullptr);
 
     for(Layer* layer : _layer_sequence) {
+        // std::cout << x.getId() << ": " << x << "\n\n";
         x = layer -> operator()(x);
+        // std::cout << x.getId() << ": " << x << "\n\n";
+        
     }
     return x;
 }

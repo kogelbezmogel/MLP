@@ -19,6 +19,7 @@ class TensorOperations {
 
         static std::map<std::string, SimpleTensor> reluDerivatives(SimpleTensor t1, SimpleTensor t2);
         static std::map<std::string, SimpleTensor> mulDerivatives(SimpleTensor t1, SimpleTensor t2, SimpleTensor t3);
+        static std::map<std::string, SimpleTensor> addDerivatives(SimpleTensor t1, SimpleTensor t2, SimpleTensor t3);
         static std::map<std::string, SimpleTensor> mseLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3);
         static std::map<std::string, SimpleTensor> cceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3);
         static std::map<std::string, SimpleTensor> bceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3);
@@ -27,8 +28,11 @@ class TensorOperations {
         static loss_fun loss(std::string loss) { return _loss_map[loss]; }
 
     private:
+        static Graph* resolveGraphContext(std::vector<Tensor*> args);
+        
         static std::map<std::string, act_fun> _activation_map;
         static std::map<std::string, loss_fun> _loss_map;
+
 };
 
 

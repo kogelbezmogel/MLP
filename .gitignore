@@ -3,6 +3,7 @@
 /old_files
 /datasets
 /gif_plots
+/tests
 
 *.out
 *.exe

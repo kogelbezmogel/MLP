@@ -9,34 +9,15 @@ Tensor TensorOperations::add(Tensor t1, Tensor t2) {
     // adding node with local gradient to graph
     // For now lets assume only one of the tensors has graph attached
     // and its always left one. First attechment of graph need to be outside the Tensor
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( t1._calc_grad || t2._calc_grad ) {
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&t1, &t2});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
 
-        if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
-            throw NoGraphAttachedException("No graph attached.\n");
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = addDerivatives(t1, t2, t3_simple);
 
-        if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
-            t2._grad_graph = t1._grad_graph;
-
-        t3_calc_grad = true;
-        t3_graph_context = t1._grad_graph;
-    }
-
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
-
-        t3_node -> setOperation("add");
-        t3_graph_context -> addNode( t3_node );
-        t3_graph_context->getNode(t1) -> addChild(t3_node);
-        t3_graph_context->getNode(t2) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t2));
-
-        // adding derivatives
-        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t1.getSize()[0] ));
-        t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, SimpleTensor::identity( t2.getSize()[0] ));
-    }
+    if(t3_calc_grad)
+        Graph::addNodeToGraph({&t1, &t2}, derivatives, &t3_simple, t3_graph_context, "add");
+    
     return Tensor(t3_simple, t3_calc_grad, t1._grad_graph);
 }
 
@@ -45,44 +26,15 @@ Tensor TensorOperations::mul(Tensor t1, Tensor t2) {
     // std::cout << "fun: mul\n";
     SimpleTensor t3_simple = t1 * t2;
     
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( t1._calc_grad || t2._calc_grad ) {
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&t1, &t2});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
 
-        if( t1._grad_graph == nullptr || t2._grad_graph == nullptr )
-            throw NoGraphAttachedException("No graph attached.\n");
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = mulDerivatives(t1, t2, t3_simple);
 
-        if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
-            t2._grad_graph = t1._grad_graph;
-
-        t3_calc_grad = true;
-        t3_graph_context = t1._grad_graph;
-    }
-    // std::cout << "  - calculated\n";
-
-
-
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
-        t3_node -> setOperation("mul");
-
-        t3_graph_context -> addNode( t3_node );
-
-        t3_graph_context->getNode(t1) -> addChild(t3_node);
-        t3_graph_context->getNode(t2) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t2));
-
-        // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = mulDerivatives(t1, t2, t3_simple);
-
-        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, derivatives[t1]);
-        t3_graph_context->getNode(t2) -> addLocalGradValue(t3_simple, derivatives[t2]);
-        // std::cout << "  - added to graph\n";
-
-
-        // std::cout << "Adding " << str_representation() << 
-    }
+    if(t3_calc_grad)
+        Graph::addNodeToGraph({&t1, &t2}, derivatives, &t3_simple, t3_graph_context, "mul");
+    
     // std::cout << "done all\n";
 
     // move constructor makes t3_simple empty because of move
@@ -135,6 +87,14 @@ std::map<std::string, SimpleTensor> TensorOperations::mulDerivatives(SimpleTenso
 }
 
 
+std::map<std::string, SimpleTensor> TensorOperations::addDerivatives(SimpleTensor t1, SimpleTensor t2, SimpleTensor t3) {
+    std::map<std::string, SimpleTensor> derivatives;
+    derivatives.insert({t1, SimpleTensor::identity( t1.getSize()[0] )});
+    derivatives.insert({t2, SimpleTensor::identity( t2.getSize()[0] )});
+    return derivatives;
+}
+
+
 Tensor TensorOperations::relu(Tensor t1) {
     // std::cout << "fun: relu\n";
 
@@ -148,34 +108,18 @@ Tensor TensorOperations::relu(Tensor t1) {
     // adding node with local gradient to graph
     // For now lets assume only one of the tensors has graph attached
     // and its always left one. First attechment of graph need to be outside the Tensor
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( t1._calc_grad ) {
-        if( t1._grad_graph == nullptr )
-            throw NoGraphAttachedException("No graph attached.\n");
-
-        t3_calc_grad = true;
-        t3_graph_context = t1._grad_graph;
-    }
 
     SimpleTensor t3_simple(t1._size, t3_data);
 
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&t1});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
+    
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = reluDerivatives(t1, t3_simple);
+
+    if(t3_calc_grad)
+        Graph::addNodeToGraph({&t1}, derivatives, &t3_simple, t3_graph_context, "relu");
     // std::cout << "  - calculated\n";
-
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple); // !!!!
-
-        t3_node -> setOperation("relu");
-        t3_graph_context -> addNode( t3_node );
-        t3_graph_context->getNode(t1) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(t1));
-        
-        // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = reluDerivatives(t1, t3_simple);
-        t3_graph_context->getNode(t1) -> addLocalGradValue(t3_simple, derivatives[t1]);
-        // std::cout << "  - added to graph\n";
-
-    }
 
     // std::cout << "fun: relu end\n";
     return Tensor(t3_simple, t3_calc_grad, t3_graph_context);
@@ -222,31 +166,17 @@ Tensor TensorOperations::mseLoss(Tensor predicted, SimpleTensor real) {
     t3_data[0] = std::pow(predicted._data[0] - real._data[0], 2);
 
     // graph 
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( predicted._calc_grad ) {
-
-        if( predicted._grad_graph == nullptr )
-            throw NoGraphAttachedException("No graph attached.\n");
-
-        t3_calc_grad = true;
-        t3_graph_context = predicted._grad_graph;
-    }
-
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&predicted});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
+    
     SimpleTensor t3_simple(t3_size, t3_data);
 
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple); // !!!!
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = mseLossDerivatives(predicted, real, t3_simple);
 
-        t3_node -> setOperation("mse");
-        t3_graph_context -> addNode( t3_node );
-        t3_graph_context->getNode(predicted) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
-        
-        // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = mseLossDerivatives(predicted, real, t3_simple);
-        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
-    }
+    if(t3_calc_grad)     if(t3_calc_grad)
+        Graph::addNodeToGraph({&predicted}, derivatives, &t3_simple, t3_graph_context, "mse");
+    // std::cout << "  - calculated\n";
 
     Tensor t(t3_simple, true, predicted._grad_graph);
     return t;
@@ -280,31 +210,17 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
     // t3_data[0] = std::exp(predicted._data[true_idx]) / t3_data[0];
 
     // graph 
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( predicted._calc_grad ) {
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&predicted});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
+    
+    SimpleTensor t3_simple(t3_size, t3_data);
 
-        if( predicted._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!";
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = cceLossDerivatives(predicted, real, t3_simple);
 
-        t3_calc_grad = true;
-        t3_graph_context = predicted._grad_graph;
-    }
+    if(t3_calc_grad)
+        Graph::addNodeToGraph({&predicted}, derivatives, &t3_simple, t3_graph_context, "cce");
 
-    SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
-
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple); // !!!!
-
-        t3_node -> setOperation("cce");
-        t3_graph_context -> addNode( t3_node );
-        t3_graph_context->getNode(predicted) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
-        
-        // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = cceLossDerivatives(predicted, real, t3_simple);
-        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
-    }
     return Tensor(t3_simple, true, predicted._grad_graph);
 }
 
@@ -348,31 +264,17 @@ Tensor TensorOperations::bceLoss(Tensor predicted, SimpleTensor real) {
     }
 
     // graph 
-    bool t3_calc_grad = false;
-    Graph* t3_graph_context = nullptr;
-    if( predicted._calc_grad ) {
+    Graph* t3_graph_context = TensorOperations::resolveGraphContext({&predicted});
+    bool t3_calc_grad = (t3_graph_context != nullptr);
+    
+    SimpleTensor t3_simple(t3_size, t3_data);
 
-        if( predicted._grad_graph == nullptr )
-            std::cout << "(+) no graph attached?!"; // !!! add exception
+    // adding derivatives
+    std::map<std::string, SimpleTensor> derivatives = bceLossDerivatives(predicted, real, t3_simple);
 
-        t3_calc_grad = true;
-        t3_graph_context = predicted._grad_graph;
-    }
+    if(t3_calc_grad)
+        Graph::addNodeToGraph({&predicted}, derivatives, &t3_simple, t3_graph_context, "bce");
 
-    SimpleTensor t3_simple = SimpleTensor(t3_size, t3_data);
-
-    if(t3_calc_grad) {
-        Node* t3_node = new Node(t3_simple);
-
-        t3_node -> setOperation("bce");
-        t3_graph_context -> addNode( t3_node );
-        t3_graph_context->getNode(predicted) -> addChild(t3_node);
-        t3_graph_context->getNode(t3_simple) -> addParent(t3_graph_context->getNode(predicted));
-        
-        // adding derivatives
-        std::map<std::string, SimpleTensor> derivatives = bceLossDerivatives(predicted, real, t3_simple);
-        t3_graph_context->getNode(predicted) -> addLocalGradValue(t3_simple, derivatives[predicted]);
-    }
     return Tensor(t3_simple, true, predicted._grad_graph);
 }
 
@@ -390,19 +292,6 @@ std::map<std::string, SimpleTensor> TensorOperations::mseLossDerivatives(SimpleT
 
 
 std::map<std::string, SimpleTensor> TensorOperations::cceLossDerivatives(SimpleTensor predicted, SimpleTensor real, SimpleTensor t3) {
-    // std::vector<float> res(vec.size(), 0);
-    // for(int i=0; i<vec.size(); i++) {
-    //     float x=0, y=0, sec=0;
-
-    //     x = std::exp( vec[i] );
-    //     for(float el : vec)
-    //         y += std::exp(el);
-
-    //     if(i==y_true)
-    //         sec = 1;
-    //     res[i] = x / y - sec;
-    // }
-
     std::vector<size_t> der_t3bypredicted_size = predicted.getSize();
     // std::reverse(der_t3bypredicted_size.begin(), der_t3bypredicted_size.end()); // derivative is of size of transposed predicted tensor
     float* der_t3bypredicted_data = new float[predicted._all_elements];
@@ -448,6 +337,27 @@ std::map<std::string, SimpleTensor> TensorOperations::bceLossDerivatives(SimpleT
     std::map<std::string, SimpleTensor> derivatives;
     derivatives.insert({predicted, der_t3bypredicted});
     return derivatives;
+}
+
+Graph* TensorOperations::resolveGraphContext(std::vector<Tensor*> args) {
+
+    Graph* t3_graph_context = nullptr;
+    
+    bool calc_grad = false;
+    for(Tensor* arg : args)
+        calc_grad += arg -> _calc_grad;
+
+    if( calc_grad ) {
+
+        if( args[0] -> _grad_graph == nullptr )
+            throw NoGraphAttachedException("No graph attached.\n");
+
+        // if( t2._calc_grad ) // every tensor with _calc_grad should have the same graph context
+        //     t2._grad_graph = t1._grad_graph;
+        t3_graph_context = args[0] -> _grad_graph;
+    }
+
+    return t3_graph_context;
 }
 
 

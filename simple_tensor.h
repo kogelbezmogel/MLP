@@ -7,10 +7,10 @@
 class SimpleTensor {
 
     friend class TensorOperations;
+    friend class Model;
     friend SimpleTensor operator*(const SimpleTensor& t1, const SimpleTensor& t2);
     friend SimpleTensor operator*(float sc, SimpleTensor& t1);
     friend SimpleTensor operator+(const SimpleTensor& t1, const SimpleTensor& t2);
-    friend class Model;
     
     public:
         SimpleTensor(); // no id. Just empty representation of a tensor. Not much can be done with it
@@ -61,6 +61,10 @@ class SimpleTensor {
         float at(std::vector<size_t> point) const;
 
         void set(float val, std::vector<size_t> point);
+
+        std::string getId() {
+            return _id;
+        }
 
         static SimpleTensor rand(std::vector<size_t> size, std::pair<float, float> range);
 

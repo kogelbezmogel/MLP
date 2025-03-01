@@ -7,7 +7,6 @@
 
 
 #include "graph.h"
-#include "tensor.h"
 #include "utils.h"
 
 int Node::node_num = 0;
@@ -59,12 +58,10 @@ Node* Graph::getNode (std::string tensor_name) {
 
 
 void Graph::backwards() {
-    // std::cout << "error1\n";
     //sorting nodes
-
     orderNodes();
 
-    // std::cout << "error2\n";
+    saveGraphToFile("graph_temp.dot");
 
     // setting local_grad and grad of last node to 1
     Node* last_node = _nodes_in_order[ _nodes_in_order.size()-1 ];
@@ -207,3 +204,17 @@ void Graph::saveGraphToFile(std::string file_path) {
 //         os << str_representation( n_ptr->getValue().getSize() );
 //     return os;
 // }
+
+
+void Graph::addNodeToGraph(std::vector<SimpleTensor*> args, std::map<std::string, SimpleTensor> derivatives, SimpleTensor* t3_simple, Graph* t3_graph_context, std::string operation) {
+        Node* t3_node = new Node(*t3_simple);
+        t3_node -> setOperation(operation);
+        t3_graph_context -> addNode( t3_node );
+
+        for(SimpleTensor* arg : args) {
+            t3_graph_context->getNode(*arg) -> addChild(t3_node);
+            t3_graph_context->getNode(t3_node->getId()) -> addParent(t3_graph_context->getNode(*arg));
+            // adding derivatives
+            t3_graph_context->getNode(*arg) -> addLocalGradValue(t3_simple->getId(), derivatives[arg->getId()]);
+        }
+}
