@@ -287,18 +287,15 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 int main() {
     Model model({
         new Layer(2, 4, true, "relu"),
-        new Layer(4, 8, true, "relu"),
-        new Layer(8, 16, true, "relu"),
-        new Layer(16, 1, false, "relu")
+        new Layer(4, 1, false, "relu")
     });
-
-    Optimizer optim(model, 0.0001);
 
     size_t batch_size = 10;
     SimpleTensor sample;
     SimpleTensor y_real;
     Tensor y_pred, loss;
 
+    BGD optim(model, batch_size, 0.0001);
     Dataloader dataloader("datasets//RegressionProblem//at2po30.csv", batch_size, true);
 
     auto start = std::chrono::high_resolution_clock::now();
@@ -330,6 +327,7 @@ int main() {
             }
             // break;
         }
+        optim.close();
         std::cout << "avg_loss: " << avg_loss / num << "\n";
         // break;
     }
