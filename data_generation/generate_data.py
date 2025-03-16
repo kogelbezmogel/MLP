@@ -11,7 +11,7 @@ POPULATION_SIZE = 600
 # means = [ np.array(arr) for arr in ([1, 1, 1], [1, 1, -1], [1, -1, -1]) ]
 # variances = [ np.array(arr) for arr in ([1, 1, 1], [1, 1, 1], [1, 1, 1]) ]
 
-means = [ np.array(arr) for arr in ([-0.8, -0.8], [0.8, 0.8]) ]
+means = [ np.array(arr) for arr in ([-1.2, -1.2], [1.2, 1.2]) ]
 variances = [ np.array(arr) for arr in ([1, 1], [1, 1]) ]
 
 if __name__ == "__main__":

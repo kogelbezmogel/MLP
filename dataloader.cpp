@@ -14,10 +14,11 @@ Dataloader::Dataloader(std::string file_path, int batch_size, bool shuffle, char
     _header = header;
     this -> _file_path = file_path;
 
-    // std::cout << _file_path << " initialised" << std::endl; 
+    std::cout << _file_path << " initialised" << std::endl; 
     loadDataFromCSV();
     if(shuffle)
         this -> shuffle();
+ 
     generateBatches();
 }
 
@@ -29,6 +30,12 @@ void Dataloader::loadDataFromCSV() {
     // reading file line by line
     std::string line;
     std::vector<float> parsed_line;
+
+    if(_header) {
+        std::getline(fin, line);
+        // std::cout << "headers: " << line << "\n";
+    }
+
     while(std::getline(fin, line)) {
         parsed_line = parseLine<float>(line, _sep, [] (std::string val) {return std::stof(val); });
         data.push_back(parsed_line);
@@ -110,6 +117,7 @@ int Dataloader::countColumns() {
     int columns_count;
 
     std::getline(file, line);
+    std::getline(file, line); // to ommit header column
     std::vector<std::string> vals = parseLine<std::string>( line, _sep, [] (std::string val) {return val;});
     columns_count = vals.size();
 

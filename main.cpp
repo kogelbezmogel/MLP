@@ -11,7 +11,27 @@
 #include "simple_tensor.h"
 #include "except.h"
 
-void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pair<float, float> range2);
+using lossFun = Tensor(*) (Tensor t1, SimpleTensor t2);
+// void generateLossLandscape(Model& model, lossFun loss_fun, std::string data_path, std::pair<float, float> range1, std::pair<float, float> range2);
+
+// int main() {
+//     // to test dataloder with MNIST dataset
+//    Dataloader dataloader("datasets//Mnist//mnist_test.csv", 32, false, ',', true);
+
+//     for(Batch batch : dataloader) {
+//         for(int i = 0; i < batch.x.getSize()[0]; i++) {
+//             SimpleTensor y_i = batch.y[i].reshape({1, 1});
+//             SimpleTensor x_i = (1.0 / 256) * batch.x[i].reshape({784, 1});
+//             std::cout << x_i << "\n\n";
+//             std::cout << y_i << "\n\n";
+//             break;
+//         }
+//         break;
+//     }
+// }
+
+
+
 
 // int main() {
 
@@ -19,16 +39,12 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //         new Layer(2, 1, false, "")
 //     });
 
-//     SimpleTensor weight_mod({1, 2}, {3, 6});
+//     SimpleTensor weight_mod({1, 2}, {0.0, 0.5});
 //     model.getLayer("layer_0") -> setWeight(weight_mod);
 
+//     // generateLossLandscape(model, TensorOperations::bceLoss, "datasets/TwoClassProblem/at2po30.csv", {0, 3}, {0, 3});
 
-//     // generateLossLandscape(model, {0, 3}, {0, 3});
-
-
-//     Optimizer optim(model, 0.002);
-
-//     size_t batch_size = 64;
+//     size_t batch_size = 1;
 //     SimpleTensor sample;
 //     SimpleTensor y_real;
 //     Tensor y_pred, loss;
@@ -37,8 +53,9 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //     SimpleTensor y_r;
 //     Tensor y_p, l;
 
-//     // Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
-//     Dataloader dataloader_check("datasets/TwoClassProblem/at2po30.csv", batch_size, false);
+//     SGD optim(model, 0.01);
+//     Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
+//     Dataloader dataloader_check("datasets/TwoClassProblem/at2po30.csv", 120, false);
 
 
 //     auto start = std::chrono::high_resolution_clock::now();
@@ -72,7 +89,7 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //     fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 
 
-//     for(int epoch = 0; epoch < 4; epoch++) {
+//     for(int epoch = 0; epoch < 1; epoch++) {
 //         Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", batch_size, true);
 //         for(Batch batch : dataloader) {
 //             num = 0;
@@ -98,23 +115,22 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //                 loss.getGraphContext() -> clearSequence();
 
 //                 num++;
-
-//                 sum_loss = 0;
-//                 for(Batch batch_check : dataloader_check) {
-//                     for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
-//                         y_r = batch_check.y[j].reshape({1, 1});
-//                         sam = batch_check.x[j].reshape({2, 1});
-
-//                         y_p = model(sam);
-//                         l = TensorOperations::bceLoss(y_p, y_r);
-
-//                         sum_loss += l.at({0, 0});
-//                         l.getGraphContext() -> clearSequence();
-//                     }
-//                 }
-//                 fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
-
 //             }
+
+//             sum_loss = 0;
+//             for(Batch batch_check : dataloader_check) {
+//                 for(int j = 0; j < batch_check.x.getSize()[0]; j++) {
+//                     y_r = batch_check.y[j].reshape({1, 1});
+//                     sam = batch_check.x[j].reshape({2, 1});
+
+//                     y_p = model(sam);
+//                     l = TensorOperations::bceLoss(y_p, y_r);
+
+//                     sum_loss += l.at({0, 0});
+//                     l.getGraphContext() -> clearSequence();
+//                 }
+//             }
+//             fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 //         }
 //         std::cout << "e " << epoch <<  " | avg_loss: " << avg_loss / num << " avg_acc: " << accuracy / num << "\n";
 //     }
@@ -130,72 +146,70 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 
 
 
-//////////////////////////////////////// VISUALISATION OF REGRESSION
+// //////////////////////////////////////// VISUALISATION OF REGRESSION
 
-void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pair<float, float> range2) {
-    float step = 0.02;
-    float w1, w2;
+// void generateLossLandscape(Model& model, lossFun loss_fun, std::string data_path, std::pair<float, float> range1, std::pair<float, float> range2) {
+//     float step = 0.03;
+//     float w1, w2;
 
-    Dataloader dataloader("datasets/TwoClassProblem/at2po30.csv", 1, false);
+//     Dataloader dataloader(data_path, 1, false);
 
-    float min_w1, min_w2, min_loss = 10e10;
-    float max_loss = -1, avg_loss;
-    int steps_all =  0;
+//     float min_w1, min_w2, min_loss = 10e10;
+//     float max_loss = -1, avg_loss;
+//     int steps_all =  0;
 
-    std::ofstream fout("loss_landscape.csv");
-    for(float w1 = range1.first; w1 < range1.second; w1 += step)
-        for(float w2 = range2.first; w2 < range2.second; w2 += step) {
+//     std::ofstream fout("loss_landscape.csv");
+//     for(float w1 = range1.first; w1 < range1.second; w1 += step)
+//         for(float w2 = range2.first; w2 < range2.second; w2 += step) {
             
-            float loss_sum = 0;
-            SimpleTensor sample;
-            Tensor loss, y_real, y_pred;
+//             float loss_sum = 0;
+//             SimpleTensor sample;
+//             Tensor loss, y_real, y_pred;
 
-            SimpleTensor weight_mod({1, 2}, {w1, w2});
-            model.getLayer("layer_0") -> setWeight(weight_mod);
+//             SimpleTensor weight_mod({1, 2}, {w1, w2});
+//             model.getLayer("layer_0") -> setWeight(weight_mod);
 
-            for(Batch batch : dataloader) 
-                for(int i = 0; i < batch.x.getSize()[0]; i++) {
-                    y_real = batch.y[i].reshape({1, 1});
-                    sample = batch.x[i].reshape({2, 1});
+//             for(Batch batch : dataloader) 
+//                 for(int i = 0; i < batch.x.getSize()[0]; i++) {
+//                     y_real = batch.y[i].reshape({1, 1});
+//                     sample = batch.x[i].reshape({2, 1});
 
-                    y_pred = model(sample);
-                    loss = TensorOperations::bceLoss(y_pred, y_real);
+//                     y_pred = model(sample);
+//                     loss = loss_fun(y_pred, y_real);
 
-                    loss_sum += loss.at({0, 0});
-                    loss.getGraphContext() -> clearSequence();
-                }    
-            // std::cout << "w1: " << w1 << " w2: " << w2 << "  " << loss_sum << "\n";
-            fout << w1 << ";" << w2 << ";" << loss_sum << "\n";
+//                     loss_sum += loss.at({0, 0});
+//                     loss.getGraphContext() -> clearSequence();
+//                 }    
+//             // std::cout << "w1: " << w1 << " w2: " << w2 << "  " << loss_sum << "\n";
+//             fout << w1 << ";" << w2 << ";" << loss_sum << "\n";
 
-            if(loss_sum < min_loss) {
-                min_w1 = w1;
-                min_w2 = w2;
-                min_loss = loss_sum;
-            } else if (loss_sum > max_loss ) {
-                max_loss = loss_sum;
-            }
-            avg_loss += loss_sum;
-            steps_all++;
+//             if(loss_sum < min_loss) {
+//                 min_w1 = w1;
+//                 min_w2 = w2;
+//                 min_loss = loss_sum;
+//             } else if (loss_sum > max_loss ) {
+//                 max_loss = loss_sum;
+//             }
+//             avg_loss += loss_sum;
+//             steps_all++;
 
-        }
-    fout.clear();
-    fout.close();
-    std::cout << "max loss: " << max_loss << " avg loss: " << avg_loss /  steps_all << " |  minimum w1:" <<  min_w1 << " w2: " << min_w2 << " min_loss: " << min_loss << "\n";
-}
+//         }
+//     fout.clear();
+//     fout.close();
+//     std::cout << "max loss: " << max_loss << " avg loss: " << avg_loss /  steps_all << " |  minimum w1:" <<  min_w1 << " w2: " << min_w2 << " min_loss: " << min_loss << "\n";
+// }
 
 
 // int main() {
-
+//     // regression with two parameters
 //     Model model({
 //         new Layer(2, 1, false, ""),
 //     });
-//     model["layer_0"] -> setWeight( SimpleTensor({2, 1}, {1, 1.8}) );
+//     model["layer_0"] -> setWeight( SimpleTensor({2, 1}, {2, 2}) );
 
-//     // generateLossLandscape(model, {-2, 2});
-    
-//     Optimizer optim(model, 0.07);
+//     generateLossLandscape(model, TensorOperations::mseLoss, {-2, 2}, {-2, 2});
 
-//     size_t batch_size = 10;
+//     size_t batch_size = 15;
 //     SimpleTensor sample;
 //     SimpleTensor y_real;
 //     Tensor y_pred, loss;
@@ -204,14 +218,13 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //     SimpleTensor y_r;
 //     Tensor y_p, l;
 
-
+//     BGD optim(model, batch_size, 0.07);
 //     Dataloader dataloader("datasets//RegressionProblem//at2po30.csv", batch_size, true);
 //     Dataloader dataloader_check("datasets//RegressionProblem//at2po30.csv", batch_size, false);
 
-
 //     auto start = std::chrono::high_resolution_clock::now();
 
-//     std::ofstream fout("learning.csv");
+//     std::ofstream fout("learning_bgd.csv");
 //     int num = 0;
 //     float avg_loss = 0, sum_loss = 0;
 
@@ -233,7 +246,7 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 
 
 //     // learning
-//     for(int epoch = 0; epoch < 1; epoch++) {
+//     for(int epoch = 0; epoch < 10; epoch++) {
 //         for(Batch batch : dataloader) {
 //             num = 0;
 //             avg_loss = 0;
@@ -249,22 +262,22 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 //                 optim.step();
 //                 loss.getGraphContext() -> clearSequence();
 //                 num++;
-
-//                 sum_loss = 0;
-//                 for(Batch batch_check : dataloader_check) {
-//                     for(int i = 0; i < batch_check.x.getSize()[0]; i++) {
-//                         y_r = batch_check.y[i].reshape({1, 1});
-//                         sam = batch_check.x[i].reshape({2, 1});
-
-//                         y_p = model(sam);
-//                         l = TensorOperations::mseLoss(y_p, y_r);
-
-//                         sum_loss += l.at({0, 0});
-//                         l.getGraphContext() -> clearSequence();
-//                     }
-//                 }
-//                 fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 //             }
+
+//             sum_loss = 0;
+//             for(Batch batch_check : dataloader_check) {
+//                 for(int i = 0; i < batch_check.x.getSize()[0]; i++) {
+//                     y_r = batch_check.y[i].reshape({1, 1});
+//                     sam = batch_check.x[i].reshape({2, 1});
+
+//                     y_p = model(sam);
+//                     l = TensorOperations::mseLoss(y_p, y_r);
+
+//                     sum_loss += l.at({0, 0});
+//                     l.getGraphContext() -> clearSequence();
+//                 }
+//             }
+//             fout << model.getLayer("layer_0") -> getWeight().at({0, 0}) << ";" << model.getLayer("layer_0") -> getWeight().at({0, 1})<< ";" << sum_loss << "\n";
 //         }
 //         std::cout << epoch << ". avg_loss: " << avg_loss / num << "\n";
 //     }
@@ -286,36 +299,36 @@ void generateLossLandscape(Model& model, std::pair<float, float> range1, std::pa
 
 int main() {
     Model model({
-        new Layer(2, 4, true, "relu"),
-        new Layer(4, 1, false, "relu")
+        new Layer(4, 8, true, "relu"),
+        new Layer(8, 16, true, "relu"),
+        new Layer(16, 3, true, "")
     });
 
-    size_t batch_size = 10;
+    size_t batch_size = 32;
     SimpleTensor sample;
     SimpleTensor y_real;
     Tensor y_pred, loss;
 
-    BGD optim(model, batch_size, 0.0001);
-    Dataloader dataloader("datasets//RegressionProblem//at2po30.csv", batch_size, true);
+    BGD optim(model, batch_size, 0.01);
+    Dataloader dataloader("datasets//Iris//iris.csv", batch_size, true, ',', true);
 
     auto start = std::chrono::high_resolution_clock::now();
 
     try {
 
-    int num = 0;
-    float avg_loss = 0;
-    for(int epoch = 0; epoch < 200; epoch++) {
+    int num;
+    float avg_loss;
+    for(int epoch = 0; epoch < 800; epoch++) {
+        num = 0;
+        avg_loss = 0;
+            
         for(Batch batch : dataloader) {
-            num = 0;
-            avg_loss = 0;
             for(int i = 0; i < batch.x.getSize()[0]; i++) {
                 y_real = batch.y[i].reshape({1, 1});
-                sample = batch.x[i].reshape({2, 1});
-
-                // std::cout << sample.getId() << "\n";
+                sample = batch.x[i].reshape({4, 1});
 
                 y_pred = model(sample);
-                loss = TensorOperations::mseLoss(y_pred, y_real);
+                loss = TensorOperations::cceLoss(y_pred, y_real);
 
                 avg_loss += loss.at({0, 0});
                 loss.getGraphContext() -> backwards();
@@ -323,14 +336,41 @@ int main() {
                 loss.getGraphContext() -> clearSequence();
 
                 num++;
-                // break;
             }
-            // break;
         }
         optim.close();
-        std::cout << "avg_loss: " << avg_loss / num << "\n";
+        std::cout << "avg_loss: " << avg_loss / num << " samples: " << num << "\n";
         // break;
     }
+
+
+    float accuracy = 0;
+    float sum_loss = 0;
+    num = 0;
+    SimpleTensor y_r, sam;
+    Tensor l, y_p;
+
+    Dataloader dataloader_check("datasets//Iris//iris.csv", 1, true, ',', true);
+    for(Batch batch_check : dataloader_check) {
+            for(int i = 0; i < batch_check.x.getSize()[0]; i++) {
+                y_r = batch_check.y[i].reshape({1, 1});
+                sam = batch_check.x[i].reshape({4, 1});
+
+                y_p = model(sam);
+
+                if(y_p.maxInd() == y_r.at({0, 0}))
+                    accuracy++;
+
+                l = TensorOperations::cceLoss(y_p, y_r);
+                sum_loss += l.at({0, 0});
+
+                l.getGraphContext() -> clearSequence();
+                num++;
+            }
+        }
+        std::cout <<" finished | avg_loss: " << sum_loss / num << " avg_acc: " << accuracy / num << " samples: " << num << "\n";
+
+
     auto stop = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     std::cout << "time: " << duration.count() << " miliseconds\n";

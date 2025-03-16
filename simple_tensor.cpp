@@ -186,6 +186,19 @@ SimpleTensor& SimpleTensor::operator=(const SimpleTensor& to_copy) {
 }
 
 
+size_t SimpleTensor::maxInd() {
+    size_t max_ind = 0;
+    float max_val = _data[max_ind];
+    for(int i = 1; i < _all_elements; i++) {
+        if( _data[i] > max_val) {
+            max_ind = i;
+            max_val = _data[i];
+        }
+    }
+    return max_ind;
+}
+
+
 SimpleTensor& SimpleTensor::operator=(SimpleTensor && to_move) {
     // std::cout << __PRETTY_FUNCTION__ << "\n";
 

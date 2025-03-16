@@ -190,6 +190,8 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
     std::vector<size_t> p_size = predicted._size;
     std::vector<size_t> r_size = real._size;
 
+    // std::cout << "in: \n" << predicted << "\n";
+
     // the restriction for now is that CCE can be evaluated only on vector 
     if(p_size[0] != 1 && p_size[1] != 1)
         std::cout << "(cce) argument can only be a scalar value?!\n";
@@ -200,9 +202,15 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
     // size_t true_idx = 0;
     size_t true_idx = real.at({0, 0});
 
+    // constrain check
+    for(int i = 0; i < predicted._all_elements; i++) {
+        if( predicted._data[i] < -15 )
+            predicted._data[i] = -15.0;
+        else if( predicted._data[i] > 15)
+            predicted._data[i] = 15.0;
+    }
+
     for(int i = 0; i < p_size[0]; i++) {
-        // if( real._data[i] == 1.0 )
-        //     true_idx = i;
         t3_data[0] += std::exp( predicted._data[i] );
     }
 
@@ -220,6 +228,8 @@ Tensor TensorOperations::cceLoss(Tensor predicted, SimpleTensor real) {
 
     if(t3_calc_grad)
         Graph::addNodeToGraph({&predicted}, derivatives, &t3_simple, t3_graph_context, "cce");
+
+    // std::cout << "out: \n" << t3_simple << "\n";
 
     return Tensor(t3_simple, true, predicted._grad_graph);
 }

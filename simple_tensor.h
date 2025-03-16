@@ -47,10 +47,13 @@ class SimpleTensor {
 
         void fill(SimpleTensor data_source);
 
+
         // makes deep copy 
         SimpleTensor copy();
 
         SimpleTensor slice(size_t start, size_t end);
+
+        size_t maxInd();
 
         operator std::string() const { return _id; };
 
