@@ -1,3 +1,6 @@
+#ifndef __EXCEPTIONS__
+#define __EXCEPTIONS__
+
 #include <exception>
 #include <string>
 
@@ -15,6 +18,16 @@ class WrongDimensionsException : std::exception {
 class WrongSizeException : std::exception {
     public:
         WrongSizeException(std::string message) { _message = message; }
+        const char* what() const throw() { return _message.c_str(); }
+        
+    private:
+        std::string _message;
+};
+
+
+class NoTestDataInDataset : std::exception {
+    public:
+        NoTestDataInDataset(std::string message) { _message = message; }
         const char* what() const throw() { return _message.c_str(); }
         
     private:
@@ -50,3 +63,6 @@ class MustBeScalarException : std::exception {
     private:
         std::string _message;    
 };
+
+
+#endif
