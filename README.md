@@ -17,25 +17,25 @@ Calculation are made with my implementiation of tensors and automatic differenti
 + Model \
   Created model is represented in the diagram below
   <p>
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/model_architecture.png" width="160" height="300"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/model_architecture.png" width="160" height="300"/>
   </p>
 
 + Learning results
 <p float="left">
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/training_loss.png" width="350" height="350"/>
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/training_accuracy.png" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/training_loss.png" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/training_accuracy.png" width="350" height="350"/>
 </p>
   
 
 # Learning and loss visualisation for only 2 parameters.
 + Regression. Problem was random points genereted by function f(a, b) = 0.2 * a + 0.9 * b with some noise. Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
 <p float="left">
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_regression_sgd.gif" width="350" height="350"/>
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_regression_bgd.gif" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/learning_regression_sgd.gif" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/learning_regression_bgd.gif" width="350" height="350"/>
 </p>
 
 + Classification. Problem was distinction between two distributions N([], []) and N([], []). Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
 <p float="left">
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_classification_sgd.gif" width="350" height="350"/>
-  <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_classification_bgd.gif" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/learning_classification_sgd.gif" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/results/learning_classification_bgd.gif" width="350" height="350"/>
 </p>
