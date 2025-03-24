@@ -20,7 +20,12 @@ Calculation are made with my implementiation of tensors and automatic differenti
   <img src="https://github.com/kogelbezmogel/MLP/blob/master/model_architecture.png" width="160" height="300"/>
   </p>
 
-+ Learning results \
++ Learning results
+<p float="left">
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/training_loss.png" width="350" height="350"/>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/training_accuracy.png" width="350" height="350"/>
+</p>
+  
 
 # Learning and loss visualisation for only 2 parameters.
 + Regression. Problem was random points from line y = ax + b with some noise. Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
