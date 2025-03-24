@@ -6,6 +6,7 @@ The example usage can be seen in main.cpp where MLP model is trained on Iris Dat
 + Dataloader - to load data in batches from dataset
 + Model - to represent MLP model
 + Optimizer - to represent learning algorithm BGD or SGD
+  
 Calculation are made with my implementiation of tensors and automatic differentiation mechanism.
 
 
