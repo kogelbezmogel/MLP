@@ -18,7 +18,7 @@ if __name__ == "__main__":
         w1 = 0.2
         w2 = -0.9
         b = 0
-        return w1*w1*x1 - w2*w2*x2 + b + np.random.randn(1)[0] / 50
+        return w1*x1 - w2*x2 + b + np.random.randn(1)[0] / 50
     
     data_dim = x1_values.shape[0]
     population_data = np.empty([data_dim * data_dim, 3], dtype=np.float32)

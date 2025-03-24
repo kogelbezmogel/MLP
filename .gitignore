@@ -13,3 +13,4 @@ to_do_list.txt
 *.o
 *.gch
 test.cpp
+old.cpp

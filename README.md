@@ -2,10 +2,10 @@
 
 This library enables users to create and train multilayer preceptron models in C++. Usage is similar to pytorch library for python.
 The example usage can be seen in main.cpp where MLP model is trained on Iris Dataset. The main classes in library are:
-+ Dataset - to load dataset from csv file
-+ Dataloader - to load data in batches from dataset
-+ Model - to represent MLP model
-+ Optimizer - to represent learning algorithm BGD or SGD
++ **Dataset** - to load dataset from csv file
++ **Dataloader** - to load data in batches from dataset
++ **Model** - to represent MLP model
++ **Optimizer** - to represent learning algorithm BGD or SGD
   
 Calculation are made with my implementiation of tensors and automatic differentiation mechanism.
 
@@ -28,7 +28,7 @@ Calculation are made with my implementiation of tensors and automatic differenti
   
 
 # Learning and loss visualisation for only 2 parameters.
-+ Regression. Problem was random points from line y = ax + b with some noise. Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
++ Regression. Problem was random points genereted by function f(a, b) = 0.2 * a + 0.9 * b with some noise. Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
 <p float="left">
   <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_regression_sgd.gif" width="350" height="350"/>
   <img src="https://github.com/kogelbezmogel/MLP/blob/master/learning_regression_bgd.gif" width="350" height="350"/>
