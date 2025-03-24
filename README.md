@@ -11,13 +11,16 @@ Calculation are made with my implementiation of tensors and automatic differenti
 
 
 # Learning results for Iris Dataset
-+ Dataset  
++ Dataset \
   Dataset is a classification problem with 3 classes. There are 150 samples with 4 attributes and label each.
    
-+ Model
++ Model \
   Created model is represented in the diagram below
+  <p>
+  <img src="https://github.com/kogelbezmogel/MLP/blob/master/model_architecture.png" width="160" height="300"/>
+  </p>
 
-+ learning results
++ Learning results \
 
 # Learning and loss visualisation for only 2 parameters.
 + Regression. Problem was random points from line y = ax + b with some noise. Stochastic Gradient Descent (left) vs Batch Gradient Descent (right)
